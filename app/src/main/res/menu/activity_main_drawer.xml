@@ -5,31 +5,31 @@
         <item
             android:id="@+id/nav_phone_info"
             android:icon="@drawable/ic_menu_camera"
-            android:title="手机终端信息" />
+            android:title="@string/phone_info" />
         <item
             android:id="@+id/nav_current_network"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="当前网络信息" />
+            android:title="@string/current_network_info" />
         <item
             android:id="@+id/nav_base_map"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="基站地图" />
+            android:title="@string/base_map" />
         <item
             android:id="@+id/nav_alert_area"
             android:icon="@drawable/ic_menu_share"
-            android:title="临近威胁区域" />
+            android:title="@string/nearby_alert_area" />
     </group>
 
-    <item android:title="其它">
+    <item android:title="@string/other_info">
         <menu>
             <item
                 android:id="@+id/nav_settings"
                 android:icon="@drawable/ic_menu_manage"
-                android:title="设置" />
+                android:title="@string/settings" />
             <item
                 android:id="@+id/nav_about"
                 android:icon="@drawable/ic_menu_send"
-                android:title="关于" />
+                android:title="@string/about" />
         </menu>
     </item>
 

@@ -1,5 +1,6 @@
 package com.example.a.tower;
 
+import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -81,9 +82,18 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_phone_info) {
-            // Handle the camera action
+            // Handle the phone info action
+            setTitle(R.string.phone_info);
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, new FragmentPhoneInfo())
+                    .commit();
         } else if (id == R.id.nav_current_network) {
-
+            setTitle(R.string.current_network_info);
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, new FragmentCurrentNetwork())
+                    .commit();
         } else if (id == R.id.nav_base_map) {
 
         } else if (id == R.id.nav_alert_area) {
