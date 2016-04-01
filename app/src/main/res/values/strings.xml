@@ -8,7 +8,7 @@
 
     <string name="phone_info">手机终端信息</string>
     <string name="current_network_info">当前网络信息</string>
-    <string name="base_map">基战地图</string>
+    <string name="base_map">基站地图</string>
     <string name="nearby_alert_area">临近威胁区域</string>
     <string name="other_info">其它</string>
     <string name="settings">设置</string>

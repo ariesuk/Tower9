@@ -95,6 +95,11 @@ public class MainActivity extends AppCompatActivity
                     .replace(R.id.content_frame, new FragmentCurrentNetwork())
                     .commit();
         } else if (id == R.id.nav_base_map) {
+            setTitle(R.string.base_map);
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, new FragmentBaseMap())
+                    .commit();
 
         } else if (id == R.id.nav_alert_area) {
 
