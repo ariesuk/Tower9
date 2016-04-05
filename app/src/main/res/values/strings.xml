@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Tower</string>
+    <string name="empty">empty0</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -13,5 +14,47 @@
     <string name="other_info">其它</string>
     <string name="settings">设置</string>
     <string name="about">关于</string>
+
+    <string name="device_info_title">设备信息</string>
+    <string name="sim_info_title">SIM卡信息</string>
+    <string name="sim_country">国家:</string>
+    <string name="sim_operator_id">运营商 ID:</string>
+
+    <string name="network_info">网络信息</string>
+    <string name="cell_info_title">当前威胁级别</string>
+    <string name="sim_operator_name">运营商名称:</string>
+    <string name="sim_imsi">IMSI:</string>
+    <string name="sim_serial">序列号:</string>
+    <string name="device_type">手机类型:</string>
+    <string name="device_imei">IMEI:</string>
+    <string name="device_version">RIL 版本:</string>
+    <string name="network_name">供应商名称:</string>
+    <string name="network_code">供应商代码:</string>
+    <string name="network_type">类型:</string>
+    <string name="network_lac">LAC:</string>
+    <string name="network_cellid">CID:</string>
+    <string name="data_activity">数据活动:</string>
+    <string name="data_status">数据状态:</string>
+    <string name="network_roaming">漫游状态:</string>
+    <string name="network_lte_timing_advance">TA (LTE):</string>
+    <string name="button_refresh">刷新</string>
+    <string name="drawer_open">打开导航抽屉</string>
+    <string name="about_github">GitHub 上的 AIMSICD</string>
+    <string name="about_wiki">文档</string>
+    <string name="about_contribute">贡献</string>
+    <string name="about_disclaimer">免责声明</string>
+    <string name="about_releases">版本发布</string>
+    <string name="about_changelog">更新日志</string>
+    <string name="about_license">许可协议</string>
+    <string name="status_idle_about_desc">空闲 / 载入中。</string>
+    <string name="about_credits">鸣谢表</string>
+    <string name="status_ok_about_desc">一切良好。</string>
+    <string name="status_danger_about_desc">你正在被追查！</string>
+    <string name="status_medium_about_desc">不安全的服务区。远离它！</string>
+    <string name="network_netid">网络 ID:</string>
+    <string name="network_sysid">系统 ID:</string>
+    <string name="network_baseid">基站 ID:</string>
+
+
 
 </resources>
