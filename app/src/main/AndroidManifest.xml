@@ -43,6 +43,12 @@
         </activity>
 
         <service
+            android:name=".TowerService"
+            android:enabled="true"
+            android:exported="false">
+        </service>
+
+        <service
             android:name="com.baidu.location.f"
             android:enabled="true"
             android:process=":remote" >
