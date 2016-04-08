@@ -53,4 +53,7 @@ public class TowerService extends Service {
     public CellTracker getCellTracker() {
         return mCellTracker;
     }
+    public Cell getCell() {
+        return mCellTracker.getDevice().mCell;
+    }
 }

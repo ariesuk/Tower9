@@ -97,6 +97,34 @@ public class FragmentPhoneInfo extends Fragment {
             mTowerService.getCellTracker().refreshDevice();
             Device mDevice = mTowerService.getCellTracker().getDevice();
 
+            switch (mDevice.getPhoneID()) {
+
+                case TelephonyManager.PHONE_TYPE_NONE:  // Maybe bad!
+                case TelephonyManager.PHONE_TYPE_SIP:   // Maybe bad!
+                case TelephonyManager.PHONE_TYPE_GSM: {
+                    content = (TextView)  getView().findViewById(R.id.network_lac);
+                    content.setText(String.valueOf(mTowerService.getCell().getLAC()));//updateText(String.valueOf(mTowerService.getCell().getLAC()), ani);
+                    //tr = (TableRow) getView().findViewById(R.id.gsm_cellid);
+                    //tr.setVisibility(View.VISIBLE);
+                    content = (TextView)  getView().findViewById(R.id.network_cellid);
+                    content.setText(String.valueOf(mTowerService.getCell().getCID()));//updateText(String.valueOf(mTowerService.getCell().getCID()), ani);
+                    break;
+                }
+            }
+
+            String notAvailable = getString(R.string.n_a);
+
+            content = (TextView)  getView().findViewById(R.id.sim_country);
+            content.setText(mDevice.getSimCountry());//updateText(mDevice.getSimCountry().orElse(notAvailable), ani);
+            content = (TextView)  getView().findViewById(R.id.sim_operator_id);
+            content.setText(mDevice.getSimOperator());//updateText(mDevice.getSimOperator().orElse(notAvailable), ani);
+            content = (TextView) getView().findViewById(R.id.sim_operator_name);
+            content.setText(mDevice.getSimOperatorName());//updateText(mDevice.getSimOperatorName().orElse(notAvailable), ani);
+            content = (TextView)  getView().findViewById(R.id.sim_imsi);
+            content.setText(mDevice.getSimSubs());//updateText(mDevice.getSimSubs().orElse(notAvailable), ani);
+            content = (TextView)  getView().findViewById(R.id.sim_serial);
+            content.setText(mDevice.getSimSerial());//updateText(mDevice.getSimSerial().orElse(notAvailable), ani);
+
             content = (TextView)  getView().findViewById(R.id.device_type);
             content.setText(mDevice.getPhoneType());
             content = (TextView)  getView().findViewById(R.id.device_imei);

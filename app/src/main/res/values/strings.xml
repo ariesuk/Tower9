@@ -2,6 +2,7 @@
     <string name="app_name">Tower</string>
     <string name="empty">empty0</string>
     <string name="unknown">Unknown</string>
+    <string name="n_a">N/A</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
