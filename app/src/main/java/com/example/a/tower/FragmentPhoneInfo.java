@@ -103,11 +103,11 @@ public class FragmentPhoneInfo extends Fragment {
                 case TelephonyManager.PHONE_TYPE_SIP:   // Maybe bad!
                 case TelephonyManager.PHONE_TYPE_GSM: {
                     content = (TextView)  getView().findViewById(R.id.network_lac);
-                    content.setText(String.valueOf(mTowerService.getCell().getLAC()));//updateText(String.valueOf(mTowerService.getCell().getLAC()), ani);
+                    content.setText(String.valueOf(mTowerService.getCell().getLac()));//updateText(String.valueOf(mTowerService.getCell().getLAC()), ani);
                     //tr = (TableRow) getView().findViewById(R.id.gsm_cellid);
                     //tr.setVisibility(View.VISIBLE);
                     content = (TextView)  getView().findViewById(R.id.network_cellid);
-                    content.setText(String.valueOf(mTowerService.getCell().getCID()));//updateText(String.valueOf(mTowerService.getCell().getCID()), ani);
+                    content.setText(String.valueOf(mTowerService.getCell().getCid()));//updateText(String.valueOf(mTowerService.getCell().getCID()), ani);
                     break;
                 }
             }

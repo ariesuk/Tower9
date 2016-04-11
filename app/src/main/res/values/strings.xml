@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Tower</string>
-    <string name="empty">empty0</string>
+    <string name="empty"></string>
     <string name="unknown">Unknown</string>
     <string name="n_a">N/A</string>
 
@@ -57,6 +57,8 @@
     <string name="network_sysid">系统 ID:</string>
     <string name="network_baseid">基站 ID:</string>
 
-
+    <string name="ciphering_indicator_title">加密指示器</string>
+    <string name="neighbouring_cells_title">临近蜂窝</string>
+    <string name="neighbouring_cells_num_title">总计:</string>
 
 </resources>

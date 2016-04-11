@@ -121,7 +121,7 @@ public class Cell implements Parcelable {
      *
      * @return int representing the Cell ID from GSM or CDMA devices
      */
-    public int getCID() {
+    public int getCid() {
         return this.cid;
     }
 
@@ -130,7 +130,7 @@ public class Cell implements Parcelable {
      *
      * @param cid Cell ID
      */
-    public void setCID(int cid) {
+    public void setCid(int cid) {
         this.cid = cid;
     }
 
@@ -139,7 +139,7 @@ public class Cell implements Parcelable {
      *
      * @return int Current cells Location Area Code
      */
-    public int getLAC() {
+    public int getLac() {
         return this.lac;
     }
 
@@ -148,7 +148,7 @@ public class Cell implements Parcelable {
      *
      * @param lac Location Area Code
      */
-    public void setLAC(int lac) {
+    public void setLac(int lac) {
         this.lac = lac;
     }
 
@@ -157,7 +157,7 @@ public class Cell implements Parcelable {
      *
      * @return int Current cells Mobile Country Code
      */
-    public int getMCC() {
+    public int getMcc() {
         return this.mcc;
     }
 
@@ -166,7 +166,7 @@ public class Cell implements Parcelable {
      *
      * @param mcc Mobile Country Code
      */
-    public void setMCC(int mcc) {
+    public void setMcc(int mcc) {
         this.mcc = mcc;
     }
 
@@ -175,7 +175,7 @@ public class Cell implements Parcelable {
      *
      * @return int Current cells Mobile Network Code
      */
-    public int getMNC() {
+    public int getMnc() {
         return this.mnc;
     }
 
@@ -184,7 +184,7 @@ public class Cell implements Parcelable {
      *
      * @param mnc Mobile Network Code
      */
-    public void setMNC(int mnc) {
+    public void setMnc(int mnc) {
         this.mnc = mnc;
     }
 
@@ -193,7 +193,7 @@ public class Cell implements Parcelable {
      *
      * @return int Current cells Primary Scrambling Code
      */
-    public int getPSC() {
+    public int getPsc() {
         return this.psc;
     }
 
@@ -202,7 +202,7 @@ public class Cell implements Parcelable {
      *
      * @param psc Primary Scrambling Code
      */
-    public void setPSC(int psc) {
+    public void setPsc(int psc) {
         if (psc == -1) {
             this.psc = Integer.MAX_VALUE;
         } else {
@@ -219,7 +219,7 @@ public class Cell implements Parcelable {
      *
      * @return Current cell's Radio Access Technology (e.g. UMTS, GSM) or null if not known
      */
-    public String getRAT() {
+    public String getRat() {
         return getRatFromInt(this.netType);
     }
 
@@ -228,7 +228,7 @@ public class Cell implements Parcelable {
      *
      * @return System ID or Integer.MAX_VALUE if not supported
      */
-    public int getSID() {
+    public int getSid() {
         return this.sid;
     }
 
@@ -237,7 +237,7 @@ public class Cell implements Parcelable {
      *
      * @param sid CDMA System ID
      */
-    public void setSID(int sid) {
+    public void setSid(int sid) {
         this.sid = sid;
     }
 
@@ -246,7 +246,7 @@ public class Cell implements Parcelable {
      *
      * @return Signal Strength Measurement (dBm)
      */
-    public int getDBM() {
+    public int getDbm() {
         return dbm;
     }
 
@@ -255,7 +255,7 @@ public class Cell implements Parcelable {
      *
      * @param dbm Signal Strength (dBm)
      */
-    public void setDBM(int dbm) {
+    public void setDbm(int dbm) {
         this.dbm = dbm;
     }
 
@@ -430,11 +430,11 @@ public class Cell implements Parcelable {
         }
         Cell other = (Cell) obj;
         if (this.psc != Integer.MAX_VALUE) {
-            return this.cid == other.getCID() && this.lac == other.getLAC() && this.mcc == other
-                    .getMCC() && this.mnc == other.getMNC() && this.psc == other.getPSC();
+            return this.cid == other.getCid() && this.lac == other.getLac() && this.mcc == other
+                    .getMcc() && this.mnc == other.getMnc() && this.psc == other.getPsc();
         } else {
-            return this.cid == other.getCID() && this.lac == other.getLAC() && this.mcc == other
-                    .getMCC() && this.mnc == other.getMNC();
+            return this.cid == other.getCid() && this.lac == other.getLac() && this.mcc == other
+                    .getMcc() && this.mnc == other.getMnc();
         }
     }
 
@@ -455,7 +455,7 @@ public class Cell implements Parcelable {
     }
 
     public boolean isValid() {
-        return this.getCID() != Integer.MAX_VALUE && this.getLAC() != Integer.MAX_VALUE;
+        return this.getCid() != Integer.MAX_VALUE && this.getLac() != Integer.MAX_VALUE;
     }
 
     /**
