@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Tower</string>
+    <string name="app_name">基站监测</string>
     <string name="empty"></string>
     <string name="unknown">Unknown</string>
     <string name="n_a">N/A</string>
