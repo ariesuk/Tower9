@@ -5,7 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -38,6 +40,7 @@ import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by a on 2016/4/1.
@@ -51,6 +54,9 @@ public class FragmentBaseMap extends Fragment {
     LocationClient mLocClient;
     public MyLocationListenner myListener = new MyLocationListenner();
     private MyLocationConfiguration.LocationMode mCurrentMode;
+
+    public static final int BASE_STATIONS_REQUEST = 1;
+    private List<RegisteredBaseStation> mAllRegisteredStation;
 
     // draw fake base station
     private Marker mMarkerA;
@@ -125,9 +131,63 @@ public class FragmentBaseMap extends Fragment {
         mMapView = (MapView) getActivity().findViewById(R.id.bmapView);
         mBaiduMap = mMapView.getMap();
         startMyLoc();
+        new StationsAsyncTask().execute(BASE_STATIONS_REQUEST);
         super.onStart();
     }
 
+
+
+    private class StationsAsyncTask extends AsyncTask<Integer, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Integer... type) {
+            switch (type[0]) {
+                case BASE_STATIONS_REQUEST:
+                    return getRegisteredBaseStations();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+            if (result) {
+                updateRegisteredBaseStations();
+            }
+        }
+    }
+
+    public boolean getRegisteredBaseStations() {
+        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
+        mDbHelper.createDatabase();
+        mDbHelper.open();
+        mAllRegisteredStation = new ArrayList<>();
+        Cursor cursor = mDbHelper.getTestData();
+        if (cursor.moveToFirst()) {
+            do {
+                RegisteredBaseStation station = new RegisteredBaseStation();
+                station.LONGITUDE = Double.parseDouble(cursor.getString(12));
+                station.LATITUDE = Double.parseDouble(cursor.getString(13));
+                Log.d("data..........H", cursor.getString(12) + cursor.getString(13));
+                mAllRegisteredStation.add(station);
+            } while (cursor.moveToNext());
+        }
+        mDbHelper.close();
+        return  mAllRegisteredStation.size()>0;
+    }
+
+    public void updateRegisteredBaseStations() {
+        if (mAllRegisteredStation==null) return;
+        for(RegisteredBaseStation station : mAllRegisteredStation) {
+            LatLng llS = new LatLng(station.LATITUDE, station.LONGITUDE);
+            MarkerOptions ooS = new MarkerOptions().position(llS).icon(bdA)
+                    .zIndex(9).draggable(true);
+            if (true) {
+                //掉下动画
+                ooS.animateType(MarkerOptions.MarkerAnimateType.none);
+            }
+            mMarkerA = (Marker) (mBaiduMap.addOverlay(ooS));
+        }
+    }
 
     public void  startMyLoc() {
         // 开启定位图层
@@ -168,7 +228,7 @@ public class FragmentBaseMap extends Fragment {
                 MapStatus.Builder builder = new MapStatus.Builder();
                 builder.target(ll).zoom(16.0f);
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-                initOverlay(ll);
+                //initOverlay(ll);
             }
         }
 
