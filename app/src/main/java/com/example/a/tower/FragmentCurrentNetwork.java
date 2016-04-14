@@ -137,7 +137,7 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
     }
 
     void updateStockNeighbouringCells() {
-        ListView lv = (ListView)  getView().findViewById(R.id.list_view);;
+        ListView lv = (ListView)  getView().findViewById(R.id.list_view);
         //@InjectView(R.id.neighbouring_cells)
         TextView mNeighbouringCells = (TextView)  getView().findViewById(R.id.neighbouring_cells);
 

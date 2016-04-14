@@ -25,7 +25,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
     private static final int DATABASE_VERSION = 1;
 
     // BaseStation table name
-    private static final String TABLE_STATION2 = "REGISTEREDSTATION2";
+    private static final String TABLE_STATION2 = "REGISTEREDSTATION5";
 
     private SQLiteDatabase mDataBase;
     private final Context mContext;
