@@ -262,6 +262,9 @@ public class FragmentBaseMap extends Fragment {
         @Override
         protected void onPostExecute(Boolean result) {
             super.onPostExecute(result);
+            if (getActivity() == null) {
+                return; // fragment detached
+            }
             if (result) {
                 updateRegisteredBaseStations();
             }
