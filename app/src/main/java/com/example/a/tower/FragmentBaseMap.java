@@ -279,7 +279,7 @@ public class FragmentBaseMap extends Fragment {
         LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
         LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
         //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
-        Cursor cursor = mDbHelper.getStationsByGpsScope(new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.registeredStationTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
         int i = 0;
         if (cursor.moveToFirst()) {
             do {

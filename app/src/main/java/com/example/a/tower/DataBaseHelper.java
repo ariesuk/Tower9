@@ -25,7 +25,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
     private static final int DATABASE_VERSION = 1;
 
     // BaseStation table name
-    private static final String TABLE_STATION2 = "REGISTEREDSTATION5";
+    //private static final String TABLE_STATION2 = "REGISTEREDSTATION2";
 
     private SQLiteDatabase mDataBase;
     private final Context mContext;
@@ -57,9 +57,9 @@ public class DataBaseHelper extends SQLiteOpenHelper
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_STATION2);
+        //db.execSQL("DROP TABLE IF EXISTS " + TABLE_STATION2);
         // Creating tables again
-        onCreate(db);
+        //onCreate(db);
     }
 
     public void createDataBase() throws IOException
