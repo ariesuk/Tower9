@@ -163,4 +163,8 @@ public class MainActivity extends AppCompatActivity
             mBound = false;
         }
     };
+
+    public TowerService getTowerService() {
+        return mTowerService;
+    }
 }

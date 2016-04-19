@@ -63,9 +63,12 @@ public class FragmentBaseMap extends Fragment {
     public static final int BASE_STATIONS_REQUEST = 1;
     public StationsAsyncTask stationsAsyncTask;
     private List<RegisteredBaseStation> mAllRegisteredStation;
-    private List<Marker> mStationMakerList;
+    private List<Cell> mAllDetectedStation;
+    private List<Marker> mRegisteredStationMakerList;
+    private List<Marker> mDetectedStationMakerList;
 
-    static double BAIDU_OFFSET_LAT = 0.00374531687912;
+    //static double BAIDU_OFFSET_LAT = 0.00374531687912;
+    static double BAIDU_OFFSET_LAT =  0.00360;
     static double BAIDU_OFFSET_LONG = 0.01200;
     // draw fake base station
     private Marker mMarkerA;
@@ -73,6 +76,8 @@ public class FragmentBaseMap extends Fragment {
     private Marker mMarkerC;
     private Marker mMarkerD;
     private InfoWindow mInfoWindow;
+    private int currentCID;
+    private int currentLAC;
 
     // 初始化全局 bitmap 信息，不用时及时 recycle
     BitmapDescriptor bdA = BitmapDescriptorFactory
@@ -120,6 +125,9 @@ public class FragmentBaseMap extends Fragment {
 
     BitmapDescriptor bd_UNKNOWN = BitmapDescriptorFactory
             .fromResource(R.drawable.icon_unknown_base_station);
+
+    BitmapDescriptor bd_NEW_YD_LTE = BitmapDescriptorFactory
+            .fromResource(R.drawable.ic_map_pin_blue);
 
     /**
      * 构造广播监听类，监听 SDK key 验证以及网络异常广播
@@ -254,7 +262,7 @@ public class FragmentBaseMap extends Fragment {
         protected Boolean doInBackground(Integer... type) {
             switch (type[0]) {
                 case BASE_STATIONS_REQUEST:
-                    return getRegisteredBaseStations();
+                    return getAllStations();
             }
             return false;
         }
@@ -266,9 +274,23 @@ public class FragmentBaseMap extends Fragment {
                 return; // fragment detached
             }
             if (result) {
-                updateRegisteredBaseStations();
+                updateAllStations();
             }
         }
+    }
+
+    public boolean getAllStations() {
+        if(getRegisteredBaseStations()) {
+            return getDetectedStations();
+        }
+        else {
+            return false;
+        }
+    }
+
+    public void updateAllStations() {
+        updateRegisteredBaseStations();
+        updateDetectedStations();
     }
 
     public boolean getRegisteredBaseStations() {
@@ -314,6 +336,33 @@ public class FragmentBaseMap extends Fragment {
         return  mAllRegisteredStation.size()>0;
     }
 
+    public boolean getDetectedStations() {
+        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
+        mDbHelper.createDatabase();
+        mDbHelper.open();
+        mAllDetectedStation = new ArrayList<>();
+        LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
+        LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
+        //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
+        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.detectedStationTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        int i = 0;
+        if (cursor.moveToFirst()) {
+            do {
+                i++;
+                Cell cell = new Cell();
+                cell.setMnc(cursor.getInt(2));
+                cell.setLac(cursor.getInt(3));
+                cell.setCid(cursor.getInt(4));
+                cell.setLat(cursor.getDouble(11));
+                cell.setLon(cursor.getDouble(12));
+                //Log.d("data..........H", String.valueOf(cursor.getDouble(12)) + String.valueOf(cursor.getDouble(13)));
+                mAllDetectedStation.add(cell);
+            } while (cursor.moveToNext());
+        }
+        mDbHelper.close();
+        return  mAllDetectedStation.size()>0;
+    }
+
     public void updateRegisteredBaseStations() {
         if (mAllRegisteredStation==null) return;
         if (mAllRegisteredStation.size() > 390) {
@@ -334,12 +383,12 @@ public class FragmentBaseMap extends Fragment {
             return;
         }
         // clear the markers firstly
-        if (mStationMakerList!=null) {
-            for (Marker marker : mStationMakerList) {
+        if (mRegisteredStationMakerList!=null) {
+            for (Marker marker : mRegisteredStationMakerList) {
                 marker.remove();
             }
         }
-        mStationMakerList = new ArrayList<>();
+        mRegisteredStationMakerList = new ArrayList<>();
         for(RegisteredBaseStation station : mAllRegisteredStation) {
             LatLng llS = new LatLng(station.LATITUDE+ BAIDU_OFFSET_LAT, station.LONGITUDE + BAIDU_OFFSET_LONG);
             String netName = station.NETNAME;
@@ -408,10 +457,71 @@ public class FragmentBaseMap extends Fragment {
                 //掉下动画
                 ooS.animateType(MarkerOptions.MarkerAnimateType.none);
             }
-            mStationMakerList.add((Marker) (mBaiduMap.addOverlay(ooS)));
+            mRegisteredStationMakerList.add((Marker) (mBaiduMap.addOverlay(ooS)));
         }
 
     }
+
+
+    public void updateDetectedStations() {
+        if (mAllDetectedStation==null) return;
+        if (mAllDetectedStation.size() > 390) {
+            // if we got too much stations, just use the random numbers of 390
+            // do something
+            //some wrong whith below code
+            // just simple return now, improve later
+            return;
+        }
+        // clear the markers firstly
+        if (mDetectedStationMakerList!=null) {
+            for (Marker marker : mDetectedStationMakerList) {
+                marker.remove();
+            }
+        }
+        mDetectedStationMakerList = new ArrayList<>();
+        for(Cell cell : mAllDetectedStation) {
+            LatLng llS = new LatLng(cell.getLat()+ BAIDU_OFFSET_LAT, cell.getLon() + BAIDU_OFFSET_LONG);
+            int netNameId = cell.getMnc();
+            int tecNameId = cell.getNetType();
+
+            MarkerOptions ooS = new MarkerOptions().position(llS).icon(bd_UNKNOWN).zIndex(9).draggable(true);
+
+            /*
+            if (netNameId == 0 ) {//("移动")) {
+                if (tecName.contains("LTE")) {
+                    ooS = new MarkerOptions().position(llS).icon(bd_YL)
+                            .zIndex(9).draggable(true);
+                }
+                // 联通 。。电信。。
+            }
+            */
+            if (true) {
+                // do not check the netname, tecName now, improve later.
+                ooS = new MarkerOptions().position(llS).icon(bd_NEW_YD_LTE).zIndex(9).draggable(true);
+            }
+
+            TowerService ts = ((MainActivity) getActivity()).getTowerService();
+            ts.getCellTracker().refreshDevice();
+            currentCID = ts.getCell().getCid();
+            currentLAC = ts.getCell().getLac();
+            if (cell.getCid() == currentCID && cell.getLac() == currentLAC) {
+                ArrayList<BitmapDescriptor> giflist = new ArrayList<BitmapDescriptor>();
+                giflist.add(bdA);
+                giflist.add(bdB);
+                giflist.add(bdD);
+                ooS = new MarkerOptions().position(llS).icons(giflist)
+                        .zIndex(0).period(10);
+            }
+
+            if (true) {
+                //掉下动画
+                ooS.animateType(MarkerOptions.MarkerAnimateType.none);
+            }
+            mDetectedStationMakerList.add((Marker) (mBaiduMap.addOverlay(ooS)));
+        }
+
+    }
+
 
     public void initOverlay(LatLng myLL) {
         // add marker overlay
@@ -503,7 +613,23 @@ public class FragmentBaseMap extends Fragment {
 
     public  BaiduMap.OnMarkerClickListener markerListener = new BaiduMap.OnMarkerClickListener() {
         public boolean onMarkerClick(final Marker marker) {
-            int markerPos = mStationMakerList.indexOf(marker);
+            int markerPos = mRegisteredStationMakerList.indexOf(marker);
+            if (markerPos > -1) {
+                return onRegisteredMarkerClick(marker,markerPos);
+            }
+            else  {
+                markerPos = mDetectedStationMakerList.indexOf(marker);
+                if (markerPos > -1) {
+                    return onDetectedMarkerClick(marker, markerPos);
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+
+        public boolean onRegisteredMarkerClick(final Marker marker, int markerPos) {
+            //int markerPos = mRegisteredStationMakerList.indexOf(marker);
             RegisteredBaseStation station = ((RegisteredBaseStation) (mAllRegisteredStation.get(markerPos)));
             String text = station.SID + "\n" +station.NETNAME + "\n"
                     + "频段：" + station.STARTFRE + "-" + station.ENDFRE + "\n"
@@ -527,5 +653,30 @@ public class FragmentBaseMap extends Fragment {
             mBaiduMap.showInfoWindow(mInfoWindow);
             return true;
         }
+
+        public boolean onDetectedMarkerClick(final Marker marker, int markerPos) {
+            Cell cell = ((Cell) (mAllDetectedStation.get(markerPos)));
+            String text = "MNC: " + cell.getMnc() + "\n"
+                    + "CID：" + cell.getCid() + "\n"
+                    + "LAC: " + cell.getLac() + "\n"
+                    + "经度：" + cell.getLon() + "\n"
+                    + "纬度：" + cell.getLat() + "\n";
+
+            Button button = new Button(getActivity().getApplicationContext());
+            //button.setBackgroundResource(R.drawable.popup);
+            //InfoWindow.OnInfoWindowClickListener listener = null;
+            button.setText(text);
+            button.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    //marker.setIcon(bd);
+                    mBaiduMap.hideInfoWindow();
+                }
+            });
+            LatLng ll = marker.getPosition();
+            mInfoWindow = new InfoWindow(button, ll, -47);
+            mBaiduMap.showInfoWindow(mInfoWindow);
+            return true;
+        }
+
     };
 }

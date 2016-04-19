@@ -89,7 +89,16 @@ public class DataBaseAdapter {
     {
         try
         {
-            String condition = " LATITUDE > " + String.valueOf(ll_West_South.latitude) + " AND LATITUDE < " + String.valueOf(ll_East_North.latitude) +  " AND LONGITUDE > " + String.valueOf(ll_West_South.longitude) + " AND LONGITUDE < " + String.valueOf(ll_East_North.longitude);
+            String condition;
+            if (tableName.equals(TowerConstant.registeredStationTable)) {
+                condition = " LATITUDE > " + String.valueOf(ll_West_South.latitude) + " AND LATITUDE < " + String.valueOf(ll_East_North.latitude) +  " AND LONGITUDE > " + String.valueOf(ll_West_South.longitude) + " AND LONGITUDE < " + String.valueOf(ll_East_North.longitude);
+            }
+            else if (tableName.equals(TowerConstant.detectedStationTable)) {
+                condition = " gps_lat > " + String.valueOf(ll_West_South.latitude) + " AND gps_lat < " + String.valueOf(ll_East_North.latitude) +  " AND gps_lon > " + String.valueOf(ll_West_South.longitude) + " AND gps_lon < " + String.valueOf(ll_East_North.longitude);
+            }
+            else {
+                return null;
+            }
             String sql ="SELECT * FROM " + tableName +" WHERE " + condition;
 
             Cursor mCur = mDb.rawQuery(sql, null);
