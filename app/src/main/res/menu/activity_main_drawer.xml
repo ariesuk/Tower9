@@ -15,9 +15,9 @@
             android:icon="@drawable/ic_menu_gallery"
             android:title="@string/base_map" />
         <item
-            android:id="@+id/nav_alert_area"
+            android:id="@+id/nav_detected_cells"
             android:icon="@drawable/ic_menu_share"
-            android:title="@string/nearby_alert_area" />
+            android:title="@string/detected_cells_info" />
     </group>
 
     <item android:title="@string/other_info">

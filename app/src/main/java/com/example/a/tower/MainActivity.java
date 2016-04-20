@@ -7,10 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -136,7 +133,12 @@ public class MainActivity extends AppCompatActivity
                     .replace(R.id.content_frame, new FragmentBaseMap())
                     .commit();
 
-        } else if (id == R.id.nav_alert_area) {
+        } else if (id == R.id.nav_detected_cells) {
+            setTitle(R.string.detected_cells_info);
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.content_frame, new FragmentDetectedStations())
+                    .commit();
 
         } else if (id == R.id.nav_settings) {
 

@@ -115,6 +115,15 @@ public class DataBaseAdapter {
         }
     }
 
+
+    public Cursor returnDetectedStations() {
+        Cursor mCur = mDb.rawQuery("SELECT * FROM " + TowerConstant.detectedStationTable, null);
+        if (mCur!=null) {
+            mCur.moveToFirst();
+        }
+        return mCur;
+    }
+
     public static String getCurrentTimeStamp() {
         //yyyyMMddHHmmss <-- this format is needed for OCID upload
         return new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date());

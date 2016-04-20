@@ -13,6 +13,7 @@
     <string name="current_network_info">当前网络信息</string>
     <string name="base_map">基站地图</string>
     <string name="nearby_alert_area">临近威胁区域</string>
+    <string name="detected_cells_info">已测基站信息</string>
     <string name="other_info">其它</string>
     <string name="settings">设置</string>
     <string name="about">关于</string>
@@ -60,5 +61,6 @@
     <string name="ciphering_indicator_title">加密指示器</string>
     <string name="neighbouring_cells_title">临近蜂窝</string>
     <string name="neighbouring_cells_num_title">总计:</string>
+    <string name="table_contains_no_data">当前没有已测基站信息</string>
 
 </resources>
