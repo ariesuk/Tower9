@@ -182,7 +182,7 @@ public class DataBaseAdapter {
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
         values.put("CID", cell.getCid());
-        values.put("RSS", cell.getRssi());
+        values.put("RSS", cell.getDbm());
 
         values.put("time", getCurrentTimeStamp());
         values.put("gps_lat", cell.getLat());

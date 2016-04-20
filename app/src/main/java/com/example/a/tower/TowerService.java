@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import com.baidu.mapapi.model.LatLng;
 
+import java.util.List;
+
 /**
  * Created by a on 2016/4/7.
  */
@@ -177,6 +179,13 @@ public class TowerService extends Service  implements LocationListener{
         return mCellTracker;
     }
     public Cell getCell() {
-        return mCellTracker.getDevice().mCell;
+        //return
+        List<Cell> allCellList = mCellTracker.getAllCells();
+        if (allCellList!=null && allCellList.size()>0) {
+            return allCellList.get(0);
+        }
+        else  {
+            return  mCellTracker.getDevice().mCell;
+        }
     }
 }
