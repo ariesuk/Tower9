@@ -118,10 +118,12 @@ public class CellTracker {
                     if (cell.isValid()) {
                         allCells.add(cell);
                     }
+                    /*
                     else {
                         // just for test
                         allCells.add(cell);
                     }
+                    */
                 }
             }
         } catch (NullPointerException npe) {

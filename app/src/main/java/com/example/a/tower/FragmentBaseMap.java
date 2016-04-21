@@ -27,6 +27,7 @@ import com.baidu.mapapi.VersionInfo;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.CircleOptions;
 import com.baidu.mapapi.map.GroundOverlayOptions;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapStatus;
@@ -37,12 +38,16 @@ import com.baidu.mapapi.map.Marker;
 import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.Overlay;
 import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.Stroke;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.model.LatLngBounds;
 import com.baidu.mapapi.model.inner.GeoPoint;
+import com.baidu.mapapi.utils.DistanceUtil;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.lang.Math;
@@ -59,6 +64,8 @@ public class FragmentBaseMap extends Fragment {
     LocationClient mLocClient;
     public MyLocationListenner myListener = new MyLocationListenner();
     private MyLocationConfiguration.LocationMode mCurrentMode;
+    private LatLng mMyLocationLL;
+    private LinkedList<Overlay> mSignalPathList;
 
     public static final int BASE_STATIONS_REQUEST = 1;
     public StationsAsyncTask stationsAsyncTask;
@@ -78,6 +85,7 @@ public class FragmentBaseMap extends Fragment {
     private InfoWindow mInfoWindow;
     private int currentCID;
     private int currentLAC;
+    private  int currentDbm;
 
     // 初始化全局 bitmap 信息，不用时及时 recycle
     BitmapDescriptor bdA = BitmapDescriptorFactory
@@ -182,9 +190,9 @@ public class FragmentBaseMap extends Fragment {
         mMapView = (MapView) getActivity().findViewById(R.id.bmapView);
         mBaiduMap = mMapView.getMap();
         startMyLoc();
+        mSignalPathList = new LinkedList<Overlay>();
         super.onStart();
     }
-
 
     @Override
     public void onPause() {
@@ -242,12 +250,13 @@ public class FragmentBaseMap extends Fragment {
                     .direction(100).latitude(location.getLatitude())
                     .longitude(location.getLongitude()).build();
             mBaiduMap.setMyLocationData(locData);
+            drawSignalOverlayOnMyLocation(new LatLng(location.getLatitude(),location.getLongitude()));
             if (isFirstLoc) {
                 isFirstLoc = false;
                 LatLng ll = new LatLng(location.getLatitude(),
                         location.getLongitude());
                 MapStatus.Builder builder = new MapStatus.Builder();
-                builder.target(ll).zoom(16.0f);
+                builder.target(ll).zoom(18.0f);
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 //initOverlay(ll);
                 mBaiduMap.setOnMapStatusChangeListener(statusListener);
@@ -502,8 +511,11 @@ public class FragmentBaseMap extends Fragment {
 
             TowerService ts = ((MainActivity) getActivity()).getTowerService();
             ts.getCellTracker().refreshDevice();
-            currentCID = ts.getCell().getCid();
-            currentLAC = ts.getCell().getLac();
+            Cell cell1 = ts.getCell();
+            currentCID = cell1.getCid();
+            currentLAC = cell1.getLac();
+            currentDbm = cell1.getDbm();
+
             if (cell.getCid() == currentCID && cell.getLac() == currentLAC) {
                 ArrayList<BitmapDescriptor> giflist = new ArrayList<BitmapDescriptor>();
                 giflist.add(bdA);
@@ -519,9 +531,68 @@ public class FragmentBaseMap extends Fragment {
             }
             mDetectedStationMakerList.add((Marker) (mBaiduMap.addOverlay(ooS)));
         }
-
     }
 
+
+
+    public void updateStationsOnMap() {
+        if (stationsAsyncTask != null && stationsAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
+            stationsAsyncTask.cancel(true);
+        }
+        stationsAsyncTask = new StationsAsyncTask();
+        stationsAsyncTask.execute(BASE_STATIONS_REQUEST);
+    }
+
+    public void drawSignalOverlayOnMyLocation(LatLng newLocation) {
+        // add signal path here
+        if(currentDbm==0) return;
+        if (mMyLocationLL!=null && DistanceUtil.getDistance(mMyLocationLL, newLocation) < 50) return;
+
+        if (newLocation!=null) {
+            int signalColor = calculateSignalColor();
+            OverlayOptions ooCircle = new CircleOptions().fillColor(0x11333300)
+                    .center(newLocation).stroke(new Stroke(5, signalColor))
+                    .radius(60);
+            Overlay overlay = mBaiduMap.addOverlay(ooCircle);
+            mSignalPathList.addFirst(overlay);
+            if(mSignalPathList.size() > 55) {
+                Overlay oldOverlay = mSignalPathList.removeLast();
+                oldOverlay.remove();
+            }
+        }
+        mMyLocationLL = newLocation;
+    }
+
+    public int calculateSignalColor() {
+        int color = 0xAA000000;
+        if (currentDbm > -120) {
+            //深蓝
+            color = 0xAA003366;
+        }
+        if (currentDbm > -100) {
+            color = 0xAA006699;
+        }
+        if (currentDbm > -80) {
+            color = 0xAA33CCCC;
+        }
+        if (currentDbm > -60) {
+            //绿色
+            color = 0xAA66FFCC;
+        }
+        if (currentDbm > -40) {
+            //黄色
+            color = 0xAAFFFF66;
+        }
+        if (currentDbm > -20) {
+            //橙色
+            color = 0xAAFF9900;
+        }
+        if (currentDbm > 0) {
+            //红色
+            color = 0xAAFF0000;
+        }
+        return color;
+    }
 
     public void initOverlay(LatLng myLL) {
         // add marker overlay
@@ -602,13 +673,9 @@ public class FragmentBaseMap extends Fragment {
          * 地图状态改变结束
          * @param status 地图状态改变结束后的地图状态
          */
-        public void onMapStatusChangeFinish(MapStatus status){
-            if (stationsAsyncTask != null && stationsAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
-                stationsAsyncTask.cancel(true);
-            }
-             stationsAsyncTask = new StationsAsyncTask();
-             stationsAsyncTask.execute(BASE_STATIONS_REQUEST);
-            }
+        public void onMapStatusChangeFinish(MapStatus status) {
+            updateStationsOnMap();
+        }
     };
 
     public  BaiduMap.OnMarkerClickListener markerListener = new BaiduMap.OnMarkerClickListener() {
