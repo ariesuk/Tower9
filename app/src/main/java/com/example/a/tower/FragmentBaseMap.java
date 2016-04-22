@@ -77,29 +77,13 @@ public class FragmentBaseMap extends Fragment {
     //static double BAIDU_OFFSET_LAT = 0.00374531687912;
     static double BAIDU_OFFSET_LAT =  0.00360;
     static double BAIDU_OFFSET_LONG = 0.01200;
-    // draw fake base station
-    private Marker mMarkerA;
-    private Marker mMarkerB;
-    private Marker mMarkerC;
-    private Marker mMarkerD;
+
     private InfoWindow mInfoWindow;
     private int currentCID;
     private int currentLAC;
     private  int currentDbm;
 
     // 初始化全局 bitmap 信息，不用时及时 recycle
-    BitmapDescriptor bdA = BitmapDescriptorFactory
-            .fromResource(R.drawable.icon_orange_base_station);
-    BitmapDescriptor bdB = BitmapDescriptorFactory
-            .fromResource(R.drawable.icon_normal_base_station);
-    BitmapDescriptor bdC = BitmapDescriptorFactory
-            .fromResource(R.drawable.icon_normal_base_station);
-    BitmapDescriptor bdD = BitmapDescriptorFactory
-            .fromResource(R.drawable.icon_orange_base_station);
-    BitmapDescriptor bd = BitmapDescriptorFactory
-            .fromResource(R.drawable.icon_orange_base_station);
-    BitmapDescriptor bdGround = BitmapDescriptorFactory
-            .fromResource(R.drawable.ground_overlay);
 
     BitmapDescriptor bd_YG = BitmapDescriptorFactory
             .fromResource(R.drawable.icon_yg_base_station);
@@ -136,6 +120,14 @@ public class FragmentBaseMap extends Fragment {
 
     BitmapDescriptor bd_NEW_YD_LTE = BitmapDescriptorFactory
             .fromResource(R.drawable.ic_map_pin_blue);
+
+    // use for animation to indicate current connected cell
+    BitmapDescriptor bdA = BitmapDescriptorFactory
+            .fromResource(R.drawable.icon_orange_base_station);
+    BitmapDescriptor bdB = BitmapDescriptorFactory
+            .fromResource(R.drawable.icon_normal_base_station);
+    BitmapDescriptor bdC = BitmapDescriptorFactory
+            .fromResource(R.drawable.icon_orange_base_station);
 
     /**
      * 构造广播监听类，监听 SDK key 验证以及网络异常广播
@@ -258,7 +250,6 @@ public class FragmentBaseMap extends Fragment {
                 MapStatus.Builder builder = new MapStatus.Builder();
                 builder.target(ll).zoom(18.0f);
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-                //initOverlay(ll);
                 mBaiduMap.setOnMapStatusChangeListener(statusListener);
                 mBaiduMap.setOnMarkerClickListener(markerListener);
             }
@@ -520,7 +511,7 @@ public class FragmentBaseMap extends Fragment {
                 ArrayList<BitmapDescriptor> giflist = new ArrayList<BitmapDescriptor>();
                 giflist.add(bdA);
                 giflist.add(bdB);
-                giflist.add(bdD);
+                giflist.add(bdC);
                 ooS = new MarkerOptions().position(llS).icons(giflist)
                         .zIndex(0).period(10);
             }
@@ -592,68 +583,6 @@ public class FragmentBaseMap extends Fragment {
             color = 0xAAFF0000;
         }
         return color;
-    }
-
-    public void initOverlay(LatLng myLL) {
-        // add marker overlay
-        /*
-        LatLng llA = new LatLng(myLL.latitude + 0.003, myLL.longitude + 0.003);
-        LatLng llB = new LatLng(myLL.latitude - 0.004, myLL.longitude + 0.004);
-        LatLng llC = new LatLng(myLL.latitude + 0.006, myLL.longitude - 0.006);
-        LatLng llD = new LatLng(myLL.latitude - 0.005, myLL.longitude - 0.005);
-        */
-
-        LatLng llA = new LatLng(30.51335 + 0.00374531687912,114.42093333333 + 0.01200 );
-        LatLng llB = new LatLng(30.51351666666 + 0.00374531687912,114.4208833333333 + 0.01200 );
-        LatLng llC = new LatLng(30.51351666666 + 0.00374531687912,114.4202833333333  + 0.01200);
-        LatLng llD = new LatLng(30.51336666666 + 0.00374531687912,114.4202833333333 + 0.01200 );
-
-        MarkerOptions ooA = new MarkerOptions().position(llA).icon(bdB)
-                .zIndex(9).draggable(true);
-        if (true) {
-            //掉下动画
-            ooA.animateType(MarkerOptions.MarkerAnimateType.drop);
-        }
-        mMarkerA = (Marker) (mBaiduMap.addOverlay(ooA));
-        MarkerOptions ooB = new MarkerOptions().position(llB).icon(bdB)
-                .zIndex(5);
-        if (true) {
-            //掉下动画
-            ooB.animateType(MarkerOptions.MarkerAnimateType.none);
-        }
-        mMarkerB = (Marker) (mBaiduMap.addOverlay(ooB));
-        MarkerOptions ooC = new MarkerOptions().position(llC).icon(bdB)
-                .perspective(false).anchor(0.5f, 0.5f).rotate(30).zIndex(7);
-        if (true) {
-            //生长动画
-            ooC.animateType(MarkerOptions.MarkerAnimateType.grow);
-        }
-        mMarkerC = (Marker) (mBaiduMap.addOverlay(ooC));
-        ArrayList<BitmapDescriptor> giflist = new ArrayList<BitmapDescriptor>();
-        giflist.add(bdA);
-        giflist.add(bdB);
-        giflist.add(bdD);
-        MarkerOptions ooD = new MarkerOptions().position(llD).icons(giflist)
-                .zIndex(0).period(10);
-        if (true) {
-            //生长动画
-            ooD.animateType(MarkerOptions.MarkerAnimateType.grow);
-        }
-        mMarkerD = (Marker) (mBaiduMap.addOverlay(ooD));
-
-        // add ground overlay
-        LatLng southwest = new LatLng(myLL.latitude - 0.0015, myLL.longitude + 0.0015);
-        LatLng northeast = new LatLng(myLL.latitude - 0.0155, myLL.longitude + 0.0155);
-        LatLngBounds bounds = new LatLngBounds.Builder().include(northeast)
-                .include(southwest).build();
-
-        OverlayOptions ooGround = new GroundOverlayOptions()
-                .positionFromBounds(bounds).image(bdGround).transparency(0.8f);
-        mBaiduMap.addOverlay(ooGround);
-
-        MapStatusUpdate u = MapStatusUpdateFactory
-                .newLatLng(bounds.getCenter());
-        mBaiduMap.setMapStatus(u);
     }
 
     public BaiduMap.OnMapStatusChangeListener statusListener = new BaiduMap.OnMapStatusChangeListener() {
