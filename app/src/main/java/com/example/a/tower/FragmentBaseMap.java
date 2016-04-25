@@ -555,32 +555,41 @@ public class FragmentBaseMap extends Fragment {
     }
 
     public int calculateSignalColor() {
+        //default value
         int color = 0xAA000000;
-        if (currentDbm > -120) {
-            //深蓝
-            color = 0xAA003366;
+
+        if (currentDbm>0) {
+            color = 0xAAFF0000; //红色
+            return  color;
         }
-        if (currentDbm > -100) {
-            color = 0xAA006699;
-        }
-        if (currentDbm > -80) {
-            color = 0xAA33CCCC;
-        }
-        if (currentDbm > -60) {
-            //绿色
-            color = 0xAA66FFCC;
-        }
-        if (currentDbm > -40) {
-            //黄色
-            color = 0xAAFFFF66;
-        }
-        if (currentDbm > -20) {
-            //橙色
-            color = 0xAAFF9900;
-        }
-        if (currentDbm > 0) {
-            //红色
-            color = 0xAAFF0000;
+        //else currentDbm <= 0
+        switch (currentDbm/10) {
+            case -11:
+            case -10:
+                color = 0xAA003366;    //深蓝
+                break;
+            case -9:
+            case -8:
+                color = 0xAA006699; //浅蓝
+                break;
+            case -7:
+            case -6:
+                color = 0xAA33CCCC; //蓝绿
+                break;
+            case -5:
+            case -4:
+                color = 0xAA66FFCC; //绿色
+                break;
+            case -3:
+            case -2:
+                color = 0xAAFFFF66; //黄色
+                break;
+            case -1:
+            case 0:
+                color = 0xAAFF9900;  //橙色
+                break;
+            default:
+                color = 0xAA000000;
         }
         return color;
     }
