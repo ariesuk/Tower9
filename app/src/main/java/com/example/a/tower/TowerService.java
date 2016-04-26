@@ -121,6 +121,7 @@ public class TowerService extends Service  implements LocationListener{
         //table CELLSIGNALHISTROY
         mDbHelper.insertCellSingalHistory(cell,device.getIMEI());
 
+        //table DETECTEDCELLS
         if (!mDbHelper.cellInDbiBts(cell.getLac(), cell.getCid())) {
             mDbHelper.insertBTS(cell,device.getIMEI());
         }
@@ -131,10 +132,27 @@ public class TowerService extends Service  implements LocationListener{
             double maxLon = mDbHelper.maxLonOfCellArea(cell);
             double minLon = mDbHelper.minLonOfCellArea(cell);
             if (maxLat>0 && maxLon>0 && minLat>0 && minLon>0 ) {
-                LatLng newCellLL = new LatLng((maxLat+minLat)/2, (maxLon+minLon)/2);
+                //LatLng newCellLL = new LatLng((maxLat+minLat)/2, (maxLon+minLon)/2);
                 cell.setLat((maxLat+minLat)/2);
                 cell.setLon((maxLon+minLon)/2);
                 mDbHelper.updateBTS(cell);
+            }
+        }
+
+        //table DETECTEDTOWERS
+        if (!mDbHelper.cellRelatedTowerInTable(cell)){
+            mDbHelper.insertCellRelatedTower(cell, device.getIMEI());
+        }
+        else {
+            // calculate the Cell's Location by below algorithm
+            double maxLat = mDbHelper.maxLatOfCellRelatedTowerArea(cell);
+            double minLat = mDbHelper.minLatOfCellRelatedTowerArea(cell);
+            double maxLon = mDbHelper.maxLonOfCellRelatedTowerArea(cell);
+            double minLon = mDbHelper.minLonOfCellRelatedTowerArea(cell);
+            if (maxLat>0 && maxLon>0 && minLat>0 && minLon>0 ) {
+                cell.setLat((maxLat+minLat)/2);
+                cell.setLon((maxLon+minLon)/2);
+                mDbHelper.updateCellRelatedTower(cell);
             }
         }
     }

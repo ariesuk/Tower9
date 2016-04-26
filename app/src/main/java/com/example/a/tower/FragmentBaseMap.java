@@ -70,7 +70,8 @@ public class FragmentBaseMap extends Fragment {
     public static final int BASE_STATIONS_REQUEST = 1;
     public StationsAsyncTask stationsAsyncTask;
     private List<RegisteredBaseStation> mAllRegisteredStation;
-    private List<Cell> mAllDetectedStation;
+    //private List<Cell> mAllDetectedStation;
+    private List<Tower> mAllDetectedStation;
     private List<Marker> mRegisteredStationMakerList;
     private List<Marker> mDetectedStationMakerList;
 
@@ -338,6 +339,8 @@ public class FragmentBaseMap extends Fragment {
         return true;
     }
 
+    /*
+    // get from detectedCellTable
     public boolean getDetectedStations() {
         DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
         mDbHelper.createDatabase();
@@ -364,6 +367,36 @@ public class FragmentBaseMap extends Fragment {
         }
         mDbHelper.close();
        // todo, should check if this process throw error
+        return true;
+    } */
+
+    // get from detectedTowerTable
+    public boolean getDetectedStations() {
+        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
+        mDbHelper.createDatabase();
+        mDbHelper.open();
+        mAllDetectedStation = new ArrayList<>();
+        LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
+        LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
+        //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
+        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.detectedTowerTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        int i = 0;
+        if (cursor.moveToFirst()) {
+            do {
+                i++;
+                Tower tower = new Tower();
+                tower.setMnc(cursor.getInt(3));
+                tower.setLac(cursor.getInt(4));
+                tower.setTid(cursor.getInt(5)); //Tower Id
+                tower.setLat(cursor.getDouble(8));
+                tower.setLon(cursor.getDouble(9));
+                tower.setNetType(cursor.getInt(10));
+                //Log.d("data..........H", String.valueOf(cursor.getDouble(12)) + String.valueOf(cursor.getDouble(13)));
+                mAllDetectedStation.add(tower);
+            } while (cursor.moveToNext());
+        }
+        mDbHelper.close();
+        // todo, should check if this process throw error
         return true;
     }
 
@@ -483,10 +516,10 @@ public class FragmentBaseMap extends Fragment {
             }
         }
         mDetectedStationMakerList = new ArrayList<>();
-        for(Cell cell : mAllDetectedStation) {
-            LatLng llS = new LatLng(cell.getLat()+ BAIDU_OFFSET_LAT, cell.getLon() + BAIDU_OFFSET_LONG);
-            int netNameId = cell.getMnc();
-            int tecNameId = cell.getNetType();
+        for(Tower tower : mAllDetectedStation) {
+            LatLng llS = new LatLng(tower.getLat()+ BAIDU_OFFSET_LAT, tower.getLon() + BAIDU_OFFSET_LONG);
+            int netNameId = tower.getMnc();
+            int tecNameId = tower.getNetType();
 
             MarkerOptions ooS = new MarkerOptions().position(llS).icon(bd_UNKNOWN).zIndex(9).draggable(true);
 
@@ -511,7 +544,7 @@ public class FragmentBaseMap extends Fragment {
             currentLAC = cell1.getLac();
             currentDbm = cell1.getDbm();
 
-            if (cell.getCid() == currentCID && cell.getLac() == currentLAC) {
+            if (tower.getTid() == cell1.getTowerId() && tower.getLac() == currentLAC) {
                 ArrayList<BitmapDescriptor> giflist = new ArrayList<BitmapDescriptor>();
                 giflist.add(bdA);
                 giflist.add(bdB);
@@ -545,7 +578,7 @@ public class FragmentBaseMap extends Fragment {
 
         if (newLocation!=null) {
             int signalColor = calculateSignalColor();
-            OverlayOptions ooCircle = new CircleOptions().fillColor(0x11333300)
+            OverlayOptions ooCircle = new CircleOptions().fillColor(0x00333300)
                     .center(newLocation).stroke(new Stroke(5, signalColor))
                     .radius(60);
             Overlay overlay = mBaiduMap.addOverlay(ooCircle);
@@ -664,13 +697,27 @@ public class FragmentBaseMap extends Fragment {
         }
 
         public boolean onDetectedMarkerClick(final Marker marker, int markerPos) {
-            Cell cell = ((Cell) (mAllDetectedStation.get(markerPos)));
-            String text = "MNC: " + cell.getMnc() + "\n"
-                    + "网络类型：" + cell.getNetType() + "-" + cell.getRat() + "\n"
-                    + "CID：" + cell.getCid() + "\n"
-                    + "LAC: " + cell.getLac() + "\n"
-                    + "经度：" + cell.getLon() + "\n"
-                    + "纬度：" + cell.getLat() + "\n";
+            Tower tower = ((Tower) (mAllDetectedStation.get(markerPos)));
+            DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
+            mDbHelper.createDatabase();
+            mDbHelper.open();
+            String cids="";
+            Cursor cursor = mDbHelper.getDetectedCellsByTowerId(tower.getTid());
+            int i = 0;
+            if (cursor.moveToFirst()) {
+                do {
+                    i++;
+                    cids = cids + String.valueOf(cursor.getInt(6)) + "\n";
+                } while (cursor.moveToNext());
+            }
+
+            String text = "运营商: " + tower.getReadMNC() + "\n"
+                    + "网络类型：" + tower.getNetType() + "-" + tower.getRat() + "\n"
+                    + "LAC: " + tower.getLac() + "\n"
+                    + "Tower：" + tower.getTid() + "\n"
+                    + "CID：" + cids
+                    + "经度：" + tower.getLon() + "\n"
+                    + "纬度：" + tower.getLat() + "\n";
 
             Button button = new Button(getActivity().getApplicationContext());
             //button.setBackgroundResource(R.drawable.popup);

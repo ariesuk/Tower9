@@ -327,6 +327,15 @@ public class Cell implements Parcelable {
         }
     }
 
+    // just use the cid to calculate the possible tower id
+    public int getTowerId() {
+        int  towerId = 0;
+        if (getCid()>0) {
+            towerId = getCid() / 10;
+        }
+        return  towerId;
+    }
+
     public static String validatePscValue(Context c, String psc) {
         return validatePscValue(c, Integer.parseInt(psc));
     }

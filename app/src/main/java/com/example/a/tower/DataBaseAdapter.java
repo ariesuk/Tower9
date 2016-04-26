@@ -93,6 +93,9 @@ public class DataBaseAdapter {
             if (tableName.equals(TowerConstant.registeredStationTable)) {
                 condition = " LATITUDE > " + String.valueOf(ll_West_South.latitude) + " AND LATITUDE < " + String.valueOf(ll_East_North.latitude) +  " AND LONGITUDE > " + String.valueOf(ll_West_South.longitude) + " AND LONGITUDE < " + String.valueOf(ll_East_North.longitude);
             }
+            else if (tableName.equals(TowerConstant.detectedTowerTable)) {
+                condition = " gps_lat > " + String.valueOf(ll_West_South.latitude) + " AND gps_lat < " + String.valueOf(ll_East_North.latitude) +  " AND gps_lon > " + String.valueOf(ll_West_South.longitude) + " AND gps_lon < " + String.valueOf(ll_East_North.longitude);
+            }
             else if (tableName.equals(TowerConstant.detectedCellTable)) {
                 condition = " gps_lat > " + String.valueOf(ll_West_South.latitude) + " AND gps_lat < " + String.valueOf(ll_East_North.latitude) +  " AND gps_lon > " + String.valueOf(ll_West_South.longitude) + " AND gps_lon < " + String.valueOf(ll_East_North.longitude);
             }
@@ -124,14 +127,31 @@ public class DataBaseAdapter {
         return mCur;
     }
 
+    public Cursor getDetectedCellsByTowerId(int tid) {
+        Cursor mCur = mDb.rawQuery(String.format("SELECT * FROM " + TowerConstant.detectedCellTable + " WHERE TOWER = %d",tid), null);
+        if (mCur!=null) {
+            mCur.moveToFirst();
+        }
+        return mCur;
+    }
+
     public static String getCurrentTimeStamp() {
         //yyyyMMddHHmmss <-- this format is needed for OCID upload
         return new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date());
     }
 
     public boolean cellInDbiBts(int lac, int cellID) {
-        String query = String.format("SELECT CID,LAC FROM " + TowerConstant.detectedCellTable +" WHERE LAC = %d AND CID = %d",
+        String query = String.format("SELECT CID,LAC FROM " + TowerConstant.detectedCellTable + " WHERE LAC = %d AND CID = %d",
                 lac, cellID);
+        Cursor cursor = mDb.rawQuery(query, null);
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public boolean cellRelatedTowerInTable(Cell cell) {
+        String query = String.format("SELECT LAC,TOWER FROM " + TowerConstant.detectedTowerTable +" WHERE LAC = %d AND TOWER = %d",
+                cell.getLac(), cell.getTowerId());
         Cursor cursor = mDb.rawQuery(query, null);
         boolean exists = cursor.getCount() > 0;
         cursor.close();
@@ -141,16 +161,12 @@ public class DataBaseAdapter {
     //if (!cellInDbiBts(cell.getLac(), cell.getCid())) {
     public void insertBTS(Cell cell, String imei) {
         ContentValues values = new ContentValues();
-        int  towerId = 0;
-        if (cell.getCid()>0) {
-            towerId = cell.getCid() / 10;
-        }
 
         values.put("IMEI", imei);
         values.put("MCC", cell.getMcc());
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
-        values.put("TOWER", towerId);
+        values.put("TOWER", cell.getTowerId());
         values.put("CID", cell.getCid());
         values.put("PSC", cell.getPsc());
 
@@ -190,6 +206,7 @@ public class DataBaseAdapter {
         values.put("MCC", cell.getMcc());
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
+        values.put("TOWER", cell.getTowerId());
         values.put("CID", cell.getCid());
         values.put("RSS", cell.getDbm());
 
@@ -201,6 +218,38 @@ public class DataBaseAdapter {
         mDb.insert(TowerConstant.cellSignalHistoryTable, null, values);
         //log.info("DBi_bts was populated.");
     }
+
+    //
+    public void insertCellRelatedTower(Cell cell, String imei) {
+        ContentValues values = new ContentValues();
+
+        values.put("IMEI", imei);
+        values.put("MCC", cell.getMcc());
+        values.put("MNC", cell.getMnc());
+        values.put("LAC", cell.getLac());
+        values.put("TOWER", cell.getTowerId());
+
+        values.put("time_first", getCurrentTimeStamp());
+        values.put("time_last", getCurrentTimeStamp());
+
+        values.put("gps_lat", cell.getLat());
+        values.put("gps_lon", cell.getLon());
+        values.put("net_type", cell.getNetType());
+
+        mDb.insert(TowerConstant.detectedTowerTable, null, values);
+    }
+
+    public void updateCellRelatedTower(Cell cell) {
+        // If tower is already in the DB, update it to last time seen and
+        // update its GPS coordinates, if not 0.0
+        ContentValues values = new ContentValues();
+        values.put("time_last", getCurrentTimeStamp());
+        values.put("gps_lat", cell.getLat());
+        values.put("gps_lon", cell.getLon());
+
+        mDb.update(TowerConstant.detectedTowerTable, values, "TOWER=?", new String[]{Integer.toString(cell.getTowerId())});
+    }
+
 
     public double maxLatOfCellArea(Cell cell) {
         String query = String.format("SELECT MAX(gps_lat) FROM " + TowerConstant.cellSignalHistoryTable + " WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
@@ -246,4 +295,50 @@ public class DataBaseAdapter {
             return 0;
         }
     }
+
+    public double maxLatOfCellRelatedTowerArea(Cell cell) {
+        String query = String.format("SELECT MAX(gps_lat) FROM " + TowerConstant.detectedCellTable + " WHERE LAC = %d AND TOWER = %d", cell.getLac(), cell.getTowerId());
+        Cursor cursor = mDb.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            return cursor.getDouble(0);
+        }
+        else {
+            return 0;
+        }
+    }
+
+
+    public double minLatOfCellRelatedTowerArea(Cell cell) {
+        String query = String.format("SELECT MIN(gps_lat) FROM " + TowerConstant.detectedCellTable + " WHERE LAC = %d AND TOWER = %d", cell.getLac(), cell.getTowerId());
+        Cursor cursor = mDb.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            return cursor.getDouble(0);
+        }
+        else {
+            return 0;
+        }
+    }
+
+    public double maxLonOfCellRelatedTowerArea(Cell cell) {
+        String query = String.format("SELECT MAX(gps_lon) FROM " + TowerConstant.detectedCellTable + " WHERE LAC = %d AND TOWER = %d", cell.getLac(), cell.getTowerId());
+        Cursor cursor = mDb.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            return cursor.getDouble(0);
+        }
+        else {
+            return 0;
+        }
+    }
+
+    public double minLonOfCellRelatedTowerArea(Cell cell) {
+        String query = String.format("SELECT MIN(gps_lon) FROM " + TowerConstant.detectedCellTable + " WHERE LAC = %d AND TOWER = %d", cell.getLac(), cell.getTowerId());
+        Cursor cursor = mDb.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            return cursor.getDouble(0);
+        }
+        else {
+            return 0;
+        }
+    }
+
 }

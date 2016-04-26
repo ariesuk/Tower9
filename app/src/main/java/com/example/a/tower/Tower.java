@@ -1,77 +1,133 @@
 package com.example.a.tower;
 
-import android.app.Application;
-import android.os.Environment;
-
-import com.baidu.mapapi.SDKInitializer;
-
-import java.io.File;
-import java.io.IOException;
-
 /**
- * Created by a on 2016/3/31.
+ * Created by a on 2016/4/26.
  */
-public class Tower extends Application {
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        saveLogcatToFile();
 
-        // 在使用 SDK 各组间之前初始化 context 信息，传入 ApplicationContext
-        SDKInitializer.initialize(this);
+
+import android.telephony.TelephonyManager;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+public class Tower {
+
+    @Setter
+    private int tid;
+
+    /**
+     * Location Area Code
+     */
+    @Setter
+    private int lac;
+
+    /**
+     * Mobile Country Code
+     */
+    @Setter
+    private int mcc;
+
+    /**
+     * Mobile Network Code
+     */
+    @Setter
+    private int mnc;
+
+
+    /**
+     * Timestamp of current cell information
+     */
+    @Setter
+    private long timestamp;
+
+    // Tracked Cell Specific Variables
+    /**
+     * Current Network Type
+     */
+    @Setter
+    private int netType;
+
+    /**
+     * Longitude Geolocation
+     */
+    @Setter
+    private double lon;
+
+    /**
+     * Latitude
+     */
+    @Setter
+    private double lat;
+
+    {
+        mcc = Integer.MAX_VALUE;
+        mnc = Integer.MAX_VALUE;
+        lac = Integer.MAX_VALUE;
+        tid = Integer.MAX_VALUE;
+        netType = Integer.MAX_VALUE;
+        lon = 0.0;
+        lat = 0.0;
     }
 
-    private void saveLogcatToFile() {
+    public Tower() {
+    }
 
-        if ( isExternalStorageWritable() ) {
 
-            File appDirectory = new File( Environment.getExternalStorageDirectory() + "/Tower" );
-            File logDirectory = new File( appDirectory + "/log" );
-            File logFile = new File( logDirectory, "logcat" + System.currentTimeMillis() + ".txt" );
-
-            // create app folder
-            if ( !appDirectory.exists() ) {
-                appDirectory.mkdir();
-            }
-
-            // create log folder
-            if ( !logDirectory.exists() ) {
-                logDirectory.mkdir();
-            }
-
-            // clear the previous logcat and then write the new one to the file
-            try {
-                Process process = Runtime.getRuntime().exec( "logcat -c");
-                // note *:D just save all debug log to log file. see logcat --help for how to filer log
-                //process = Runtime.getRuntime().exec( "logcat -f " + logFile + " *:S com.example.a.tower.MainActivity:D");
-                process = Runtime.getRuntime().exec( "logcat -f " + logFile + " *:D");
-            } catch ( IOException e ) {
-                e.printStackTrace();
-            }
-
-        } else if ( isExternalStorageReadable() ) {
-            // only readable
-        } else {
-            // not accessible
+    // get readable string from mnc
+    public String getReadMNC() {
+        switch (getMnc()) {
+            case 0:
+                return "中国移动";
+            case 1:
+                return  "中国联通";
+            case 2:
+                return  "中国电信";
+            default:
+                return "中国XX";
         }
     }
 
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if ( Environment.MEDIA_MOUNTED.equals( state ) ) {
-            return true;
-        }
-        return false;
+    public String getRat() {
+        return getRatFromInt(this.netType);
     }
 
-    /* Checks if external storage is available to at least read */
-    public boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        if ( Environment.MEDIA_MOUNTED.equals( state ) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals( state ) ) {
-            return true;
+    public static String getRatFromInt(int netType) {
+        switch (netType) {
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+                return "1xRTT";
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+                return "CDMA";
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+                return "EDGE";
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+                return "eHRPD";
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                return "EVDO rev. 0";
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                return "EVDO rev. A";
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+                return "EVDO rev. B";
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+                return "GPRS";
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+                return "HSDPA";
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+                return "HSPA";
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+                return "HSPA+";
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+                return "HSUPA";
+            case TelephonyManager.NETWORK_TYPE_IDEN:
+                return "iDen";
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                return "LTE";
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+                return "UMTS";
+            case TelephonyManager.NETWORK_TYPE_UNKNOWN:
+                return "Unknown";
+            default:
+                return String.valueOf(netType);
         }
-        return false;
     }
 }
