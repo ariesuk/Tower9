@@ -108,6 +108,7 @@ public class TowerService extends Service  implements LocationListener{
 
         // get the cell info
         getCellTracker().refreshDevice();
+        Device device = getCellTracker().getDevice();
         Cell cell = getCell();
         cell.setLon(location.getLongitude());       // gpsd_lon
         cell.setLat(location.getLatitude());        // gpsd_lat
@@ -118,10 +119,10 @@ public class TowerService extends Service  implements LocationListener{
         mDbHelper.open();
 
         //table CELLSIGNALHISTROY
-        mDbHelper.insertCellSingalHistory(cell);
+        mDbHelper.insertCellSingalHistory(cell,device.getIMEI());
 
         if (!mDbHelper.cellInDbiBts(cell.getLac(), cell.getCid())) {
-            mDbHelper.insertBTS(cell);
+            mDbHelper.insertBTS(cell,device.getIMEI());
         }
         else  {
             // calculate the Cell's Locationg by below algorithm

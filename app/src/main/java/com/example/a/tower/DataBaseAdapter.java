@@ -69,7 +69,7 @@ public class DataBaseAdapter {
     {
         try
         {
-            String sql ="SELECT * FROM REGISTEREDSTATION5";
+            String sql ="SELECT * FROM " + TowerConstant.registeredStationTable;
 
             Cursor mCur = mDb.rawQuery(sql, null);
             if (mCur!=null)
@@ -93,7 +93,7 @@ public class DataBaseAdapter {
             if (tableName.equals(TowerConstant.registeredStationTable)) {
                 condition = " LATITUDE > " + String.valueOf(ll_West_South.latitude) + " AND LATITUDE < " + String.valueOf(ll_East_North.latitude) +  " AND LONGITUDE > " + String.valueOf(ll_West_South.longitude) + " AND LONGITUDE < " + String.valueOf(ll_East_North.longitude);
             }
-            else if (tableName.equals(TowerConstant.detectedStationTable)) {
+            else if (tableName.equals(TowerConstant.detectedCellTable)) {
                 condition = " gps_lat > " + String.valueOf(ll_West_South.latitude) + " AND gps_lat < " + String.valueOf(ll_East_North.latitude) +  " AND gps_lon > " + String.valueOf(ll_West_South.longitude) + " AND gps_lon < " + String.valueOf(ll_East_North.longitude);
             }
             else {
@@ -117,7 +117,7 @@ public class DataBaseAdapter {
 
 
     public Cursor returnDetectedStations() {
-        Cursor mCur = mDb.rawQuery("SELECT * FROM " + TowerConstant.detectedStationTable, null);
+        Cursor mCur = mDb.rawQuery("SELECT * FROM " + TowerConstant.detectedCellTable, null);
         if (mCur!=null) {
             mCur.moveToFirst();
         }
@@ -130,7 +130,7 @@ public class DataBaseAdapter {
     }
 
     public boolean cellInDbiBts(int lac, int cellID) {
-        String query = String.format("SELECT CID,LAC FROM DBi_bts WHERE LAC = %d AND CID = %d",
+        String query = String.format("SELECT CID,LAC FROM " + TowerConstant.detectedCellTable +" WHERE LAC = %d AND CID = %d",
                 lac, cellID);
         Cursor cursor = mDb.rawQuery(query, null);
         boolean exists = cursor.getCount() > 0;
@@ -139,11 +139,18 @@ public class DataBaseAdapter {
     }
 
     //if (!cellInDbiBts(cell.getLac(), cell.getCid())) {
-    public void insertBTS(Cell cell) {
+    public void insertBTS(Cell cell, String imei) {
         ContentValues values = new ContentValues();
+        int  towerId = 0;
+        if (cell.getCid()>0) {
+            towerId = cell.getCid() / 10;
+        }
+
+        values.put("IMEI", imei);
         values.put("MCC", cell.getMcc());
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
+        values.put("TOWER", towerId);
         values.put("CID", cell.getCid());
         values.put("PSC", cell.getPsc());
 
@@ -157,8 +164,9 @@ public class DataBaseAdapter {
 
         values.put("gps_lat", cell.getLat());  // TODO NO! These should be exact GPS from DBe_import or by manual addition!
         values.put("gps_lon", cell.getLon());  // TODO NO! These should be exact GPS from DBe_import or by manual addition!
+        values.put("net_type", cell.getNetType());
 
-        mDb.insert("DBi_bts", null, values);
+        mDb.insert(TowerConstant.detectedCellTable, null, values);
         //log.info("DBi_bts was populated.");
 
     }
@@ -173,11 +181,12 @@ public class DataBaseAdapter {
         // This is the native update equivalent to:
         // "UPDATE Dbi_bts time_last=...,gps_lat=..., gps_lon=... WHERE CID=..."
         // update (String table, ContentValues values, String whereClause, String[] whereArgs)
-        mDb.update("DBi_bts", values, "CID=?", new String[]{Integer.toString(cell.getCid())});
+        mDb.update(TowerConstant.detectedCellTable, values, "CID=?", new String[]{Integer.toString(cell.getCid())});
     }
 
-    public void insertCellSingalHistory(Cell cell) {
+    public void insertCellSingalHistory(Cell cell,String imei) {
         ContentValues values = new ContentValues();
+        values.put("IMEI", imei);
         values.put("MCC", cell.getMcc());
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
@@ -187,13 +196,14 @@ public class DataBaseAdapter {
         values.put("time", getCurrentTimeStamp());
         values.put("gps_lat", cell.getLat());
         values.put("gps_lon", cell.getLon());
+        values.put("net_type", cell.getNetType());
 
         mDb.insert(TowerConstant.cellSignalHistoryTable, null, values);
         //log.info("DBi_bts was populated.");
     }
 
     public double maxLatOfCellArea(Cell cell) {
-        String query = String.format("SELECT MAX(gps_lat) FROM CELLSIGNALHISTROY WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
+        String query = String.format("SELECT MAX(gps_lat) FROM " + TowerConstant.cellSignalHistoryTable + " WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
         Cursor cursor = mDb.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             return cursor.getDouble(0);
@@ -205,7 +215,7 @@ public class DataBaseAdapter {
 
 
     public double minLatOfCellArea(Cell cell) {
-        String query = String.format("SELECT MIN(gps_lat) FROM CELLSIGNALHISTROY WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
+        String query = String.format("SELECT MIN(gps_lat) FROM " + TowerConstant.cellSignalHistoryTable + " WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
         Cursor cursor = mDb.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             return cursor.getDouble(0);
@@ -216,7 +226,7 @@ public class DataBaseAdapter {
     }
 
     public double maxLonOfCellArea(Cell cell) {
-        String query = String.format("SELECT MAX(gps_lon) FROM CELLSIGNALHISTROY WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
+        String query = String.format("SELECT MAX(gps_lon) FROM " + TowerConstant.cellSignalHistoryTable + " WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
         Cursor cursor = mDb.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             return cursor.getDouble(0);
@@ -227,7 +237,7 @@ public class DataBaseAdapter {
     }
 
     public double minLonOfCellArea(Cell cell) {
-        String query = String.format("SELECT MIN(gps_lon) FROM CELLSIGNALHISTROY WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
+        String query = String.format("SELECT MIN(gps_lon) FROM " + TowerConstant.cellSignalHistoryTable + " WHERE LAC = %d AND CID = %d", cell.getLac(), cell.getCid());
         Cursor cursor = mDb.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             return cursor.getDouble(0);

@@ -333,7 +333,9 @@ public class FragmentBaseMap extends Fragment {
             } while (cursor.moveToNext());
         }
         mDbHelper.close();
-        return  mAllRegisteredStation.size()>0;
+
+        // todo, should check if this process throw error
+        return true;
     }
 
     public boolean getDetectedStations() {
@@ -344,23 +346,25 @@ public class FragmentBaseMap extends Fragment {
         LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
         LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
         //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
-        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.detectedStationTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.detectedCellTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
         int i = 0;
         if (cursor.moveToFirst()) {
             do {
                 i++;
                 Cell cell = new Cell();
-                cell.setMnc(cursor.getInt(2));
-                cell.setLac(cursor.getInt(3));
-                cell.setCid(cursor.getInt(4));
-                cell.setLat(cursor.getDouble(11));
-                cell.setLon(cursor.getDouble(12));
+                cell.setMnc(cursor.getInt(3));
+                cell.setLac(cursor.getInt(4));
+                cell.setCid(cursor.getInt(6));
+                cell.setLat(cursor.getDouble(13));
+                cell.setLon(cursor.getDouble(14));
+                cell.setNetType(cursor.getInt(15));
                 //Log.d("data..........H", String.valueOf(cursor.getDouble(12)) + String.valueOf(cursor.getDouble(13)));
                 mAllDetectedStation.add(cell);
             } while (cursor.moveToNext());
         }
         mDbHelper.close();
-        return  mAllDetectedStation.size()>0;
+       // todo, should check if this process throw error
+        return true;
     }
 
     public void updateRegisteredBaseStations() {
@@ -662,6 +666,7 @@ public class FragmentBaseMap extends Fragment {
         public boolean onDetectedMarkerClick(final Marker marker, int markerPos) {
             Cell cell = ((Cell) (mAllDetectedStation.get(markerPos)));
             String text = "MNC: " + cell.getMnc() + "\n"
+                    + "网络类型：" + cell.getNetType() + "-" + cell.getRat() + "\n"
                     + "CID：" + cell.getCid() + "\n"
                     + "LAC: " + cell.getLac() + "\n"
                     + "经度：" + cell.getLon() + "\n"
