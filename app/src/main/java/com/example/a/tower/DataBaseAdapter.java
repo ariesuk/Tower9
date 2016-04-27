@@ -1,6 +1,11 @@
 package com.example.a.tower;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -10,9 +15,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 import android.util.Log;
 
 import com.baidu.mapapi.model.LatLng;
+
+import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Created by a on 2016/4/12.
@@ -206,7 +214,6 @@ public class DataBaseAdapter {
         values.put("MCC", cell.getMcc());
         values.put("MNC", cell.getMnc());
         values.put("LAC", cell.getLac());
-        values.put("TOWER", cell.getTowerId());
         values.put("CID", cell.getCid());
         values.put("RSS", cell.getDbm());
 
@@ -341,4 +348,94 @@ public class DataBaseAdapter {
         }
     }
 
+    public boolean backupDB() {
+        String[] exportTables =  new String[]{
+            TowerConstant.detectedTowerTable,
+            TowerConstant.detectedCellTable,
+            TowerConstant.cellSignalHistoryTable,
+        };
+
+        try {
+            //backup the tables
+            for (String table : exportTables) {
+                backup(table);
+            }
+            //backup the whole db
+            exportDatabse("towerclient.sqlite");
+            return true;
+        } catch (Exception ioe) {
+            Log.e(TAG, "BackupDB() Error: ");
+            return false;
+        }
+    }
+
+    private void backup(String tableName) {
+        String externalFilesDirPath = mContext.getExternalFilesDir(null) + File.separator;
+        File dir = new File(externalFilesDirPath);
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                Log.e(TAG, "Backup(): Cannot create directory structure to " + dir.getAbsolutePath());
+            }
+        }  // We should probably add some more error handling here.
+        File file = new File(dir, "Tower-" + tableName + ".csv");
+
+        try {
+            Log.i(TAG, "Backup(): Backup file was created? " + file.createNewFile());
+            CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
+            Log.d(TAG, "DB backup() tableName: " + tableName);
+
+            Cursor c = mDb.rawQuery("SELECT * FROM " + tableName, new String[0]);
+
+            csvWrite.writeNext(c.getColumnNames());
+            String[] rowData = new String[c.getColumnCount()];
+            int size = c.getColumnCount();
+
+            while (c.moveToNext()) {
+                for (int i = 0; i < size; i++) {
+                    String columnName = c.getColumnName(i);
+                    if (columnName.equals("gps_lat") || columnName.equals("gps_lon")) {
+                        rowData[i] = String.valueOf(c.getDouble(i));
+                    }
+                    else {
+                        rowData[i] = c.getString(i);
+                    }
+                }
+                csvWrite.writeNext(rowData);
+            }
+            csvWrite.close();
+            c.close();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error exporting table: " + tableName, e);
+        }
+        Log.i(TAG, "Backup(): Successfully exported DB table to: " + file);
+    }
+
+    public void exportDatabse(String databaseName) {
+        try {
+            if (Environment.getExternalStorageDirectory().canWrite()) {
+                String currentDBPath = "";
+                if(android.os.Build.VERSION.SDK_INT >= 17){
+                    currentDBPath = mContext.getApplicationInfo().dataDir + "/databases/" + databaseName;
+                }
+                else
+                {
+                    currentDBPath = "/data/data/" + mContext.getPackageName() + "/databases/" + databaseName;
+                }
+                String backupDBPath = "backup_towerclient.sqlite";
+                File currentDB = new File(currentDBPath);
+                File backupDB = new File(mContext.getExternalFilesDir(null), backupDBPath);
+
+                if (currentDB.exists()) {
+                    FileChannel src = new FileInputStream(currentDB).getChannel();
+                    FileChannel dst = new FileOutputStream(backupDB).getChannel();
+                    dst.transferFrom(src, 0, src.size());
+                    src.close();
+                    dst.close();
+                }
+            }
+        } catch (Exception e) {
+
+        }
+    }
 }

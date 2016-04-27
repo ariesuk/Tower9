@@ -18,6 +18,10 @@
             android:id="@+id/nav_detected_cells"
             android:icon="@drawable/ic_menu_share"
             android:title="@string/detected_cells_info" />
+        <item
+            android:id="@+id/nav_export_db_table"
+            android:icon="@drawable/ic_menu_send"
+            android:title="@string/export_db_table" />
     </group>
 
     <item android:title="@string/other_info">

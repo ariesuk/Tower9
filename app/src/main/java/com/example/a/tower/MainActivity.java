@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -16,12 +18,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
+
+import au.com.bytecode.opencsv.CSVWriter;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private TowerService mTowerService;
     private boolean mBound;
     private Context mContext;
+    private DataBaseAdapter mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,6 +147,11 @@ public class MainActivity extends AppCompatActivity
                     .replace(R.id.content_frame, new FragmentDetectedStations())
                     .commit();
 
+        } else if (id == R.id.nav_export_db_table) {
+            Toast toast=Toast.makeText(getApplicationContext(),"开始导出数据...", Toast.LENGTH_SHORT);
+            toast.show();
+            exportDBTablesInBackground();
+
         } else if (id == R.id.nav_settings) {
 
         } else if (id == R.id.nav_about) {
@@ -168,5 +180,31 @@ public class MainActivity extends AppCompatActivity
 
     public TowerService getTowerService() {
         return mTowerService;
+    }
+
+    // export the db tables
+    public void exportDBTablesInBackground() {
+        new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... params) {
+                //# mDb.open();
+                mDb = new DataBaseAdapter(getBaseContext());
+                //mDb.createDatabase();
+                mDb.open();
+                return mDb.backupDB();
+            }
+
+            @Override
+            protected void onPostExecute(Boolean result) {
+               if (result) {
+                   Toast toast=Toast.makeText(getApplicationContext(),"导出数据完成！", Toast.LENGTH_SHORT);
+                   toast.show();
+               }
+               else {
+                   Toast toast=Toast.makeText(getApplicationContext(),"导出数据失败！", Toast.LENGTH_SHORT);
+                   toast.show();
+               }
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 }

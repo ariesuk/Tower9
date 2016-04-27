@@ -14,6 +14,7 @@
     <string name="base_map">基站地图</string>
     <string name="nearby_alert_area">临近威胁区域</string>
     <string name="detected_cells_info">已测基站信息</string>
+    <string name="export_db_table">导出监测数据</string>
     <string name="other_info">其它</string>
     <string name="settings">设置</string>
     <string name="about">关于</string>
