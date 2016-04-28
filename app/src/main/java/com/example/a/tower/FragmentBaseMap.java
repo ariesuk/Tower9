@@ -279,7 +279,9 @@ public class FragmentBaseMap extends Fragment {
 
     public void updateStationsOnMap() {
         if (stationsAsyncTask != null && stationsAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
-            stationsAsyncTask.cancel(true);
+            //stationsAsyncTask.cancel(true);
+            // there is a task that not finished, so do nothing
+            return;
         }
         stationsAsyncTask = new StationsAsyncTask();
         stationsAsyncTask.execute(BASE_STATIONS_REQUEST);

@@ -28,8 +28,6 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
     public static final int STOCK_REQUEST = 1;
     private RelativeLayout swipeRefreshLayout;
     private Context mContext;
-    private boolean mBound;
-    private TowerService mTowerService;
     private List<Cell> allCells;
 
     @Nullable
@@ -39,8 +37,6 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
 
         mContext = getActivity().getBaseContext();
         // Bind to LocalService
-        Intent intent = new Intent(mContext, TowerService.class);
-        mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         return v;
     }
 
@@ -60,41 +56,13 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
     @Override
     public void onResume() {
         super.onResume();
-        if (!mBound) {
-            // Bind to LocalService
-            Intent intent = new Intent(mContext, TowerService.class);
-            mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        }
+        updateUI();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Unbind from the service
-        if (mBound) {
-            mContext.unbindService(mConnection);
-            mBound = false;
-        }
     }
-
-    /**
-     * Service Connection to bind the activity to the service
-     */
-    private final ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            mTowerService = ((TowerService.TowerBinder) service).getService();
-            mBound = true;
-            updateUI();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
-        }
-    };
-
 
     @Override
     public void onRefresh() {
@@ -103,9 +71,7 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
     }
 
     private void updateUI() {
-        if (mBound) {
-            new CellAsyncTask().execute(STOCK_REQUEST);
-        }
+        new CellAsyncTask().execute(STOCK_REQUEST);
     }
 
 
@@ -129,11 +95,9 @@ public class FragmentCurrentNetwork extends Fragment implements SwipeRefreshLayo
     }
 
     boolean getStockNeighbouringCells() {
-        if (mBound) {
-            allCells = mTowerService.getCellTracker().getAllCells();
-            return allCells.size() > 0;
-        }
-        return false;
+        TowerService ts = ((MainActivity) getActivity()).getTowerService();
+        allCells = ts.getCellTracker().getAllCells();
+        return allCells.size() > 0;
     }
 
     void updateStockNeighbouringCells() {
