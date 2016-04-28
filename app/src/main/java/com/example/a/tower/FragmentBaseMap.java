@@ -11,12 +11,14 @@ import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -253,11 +255,36 @@ public class FragmentBaseMap extends Fragment {
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 mBaiduMap.setOnMapStatusChangeListener(statusListener);
                 mBaiduMap.setOnMarkerClickListener(markerListener);
+                LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mMessageReceiver,
+                        new IntentFilter("TowerLocalEvent"));
             }
         }
         public void onReceivePoi(BDLocation poiLocation) {
         }
     }
+
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Extract data included in the Intent
+            /*
+            String message = intent.getStringExtra("com.example.a.tower.LocalEvent");
+            Log.d("receiver", "Got message: " + message);
+            Toast toast=Toast.makeText(getActivity().getBaseContext(), "BroadcastReceiver::" + message,Toast.LENGTH_SHORT);
+            toast.show();
+            */
+            updateStationsOnMap();
+        }
+    };
+
+    public void updateStationsOnMap() {
+        if (stationsAsyncTask != null && stationsAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
+            stationsAsyncTask.cancel(true);
+        }
+        stationsAsyncTask = new StationsAsyncTask();
+        stationsAsyncTask.execute(BASE_STATIONS_REQUEST);
+    }
+
     private class StationsAsyncTask extends AsyncTask<Integer, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Integer... type) {
@@ -562,14 +589,6 @@ public class FragmentBaseMap extends Fragment {
     }
 
 
-
-    public void updateStationsOnMap() {
-        if (stationsAsyncTask != null && stationsAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
-            stationsAsyncTask.cancel(true);
-        }
-        stationsAsyncTask = new StationsAsyncTask();
-        stationsAsyncTask.execute(BASE_STATIONS_REQUEST);
-    }
 
     public void drawSignalOverlayOnMyLocation(LatLng newLocation) {
         // add signal path here
