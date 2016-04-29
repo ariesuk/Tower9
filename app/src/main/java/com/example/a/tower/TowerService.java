@@ -76,6 +76,7 @@ public class TowerService extends Service  implements LocationListener{
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mDbAdaper.close();
         Log.d(TAG, "onDestroy() executed");
         //mCellTracker.stop();
         //stopTraceTimer();
