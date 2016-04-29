@@ -16,21 +16,21 @@ import android.widget.TextView;
  * Created by a on 2016/4/19.
  */
 public class FragmentDetectedStations extends Fragment {
-    private DataBaseAdapter mDb;
     private ListView lv;
     private View emptyView;
+    private TowerService mTowerService;
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mDb = new DataBaseAdapter(activity.getBaseContext());
-        //mDb.createDatabase();
-        mDb.open();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_detected_cells, container, false);
+        if (mTowerService == null) {
+            mTowerService = ((MainActivity) getActivity()).getTowerService();
+        }
         return v;
     }
 
@@ -45,7 +45,10 @@ public class FragmentDetectedStations extends Fragment {
             protected BaseInflaterAdapter doInBackground(Void... params) {
                 //# mDb.open();
                 Cursor result;
-                result = mDb.returnDetectedStations();
+                if (mTowerService == null) {
+                    mTowerService = ((MainActivity) getActivity()).getTowerService();
+                }
+                result = mTowerService.getSingletonDbAdapater().returnDetectedStations();
                 BaseInflaterAdapter adapter = null;
                 if (result != null) {
                     adapter = BuildTable(result);

@@ -38,11 +38,10 @@ public class TowerService extends Service  implements LocationListener{
     private CellTracker mCellTracker;
     private LocationManager locationManager;
     private static TelephonyManager tm;
-    private LatLng lastPhoneLocation;
-    private LatLng newPhoneLocation;
     private Location mCurrentLocation;
     private Cell mCurrentCell;
     private Device mDevice;
+    private DataBaseAdapter mDbAdaper;
 
     @Override
     public void onCreate() {
@@ -52,6 +51,10 @@ public class TowerService extends Service  implements LocationListener{
 
         //the timer is not used now, maybe useful in the future
         // startTraceTimer();
+        mDbAdaper = new DataBaseAdapter(getApplicationContext());
+        mDbAdaper.createDatabase();
+        mDbAdaper.open();
+
         listenLocationChanges();
 
         tm = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
@@ -242,6 +245,11 @@ public class TowerService extends Service  implements LocationListener{
         }
     }
 
+    // The DBHelper should be singleton across a app
+    public DataBaseAdapter getSingletonDbAdapater() {
+        return mDbAdaper;
+    }
+
     private void recordNetworkCellOnLocation(Location location) {
         if(location == null) return;
         Toast toast=Toast.makeText(getApplicationContext(),String.valueOf(location.getLatitude() + "  " + String.valueOf(location.getLongitude())), Toast.LENGTH_SHORT);
@@ -265,45 +273,43 @@ public class TowerService extends Service  implements LocationListener{
         mCurrentCell.setLat(location.getLatitude());        // gpsd_lat
 
         //insert or update the cell info to the db.
-        DataBaseAdapter mDbHelper = new DataBaseAdapter(getApplicationContext());
-        mDbHelper.createDatabase();
-        mDbHelper.open();
+
 
         //table CELLSIGNALHISTROY
-        mDbHelper.insertCellSingalHistory(mCurrentCell,mDevice.getIMEI());
+        mDbAdaper.insertCellSingalHistory(mCurrentCell,mDevice.getIMEI());
 
         //table DETECTEDCELLS
-        if (!mDbHelper.cellInDbiBts(mCurrentCell.getLac(), mCurrentCell.getCid())) {
-            mDbHelper.insertBTS(mCurrentCell,mDevice.getIMEI());
+        if (!mDbAdaper.cellInDbiBts(mCurrentCell.getLac(), mCurrentCell.getCid())) {
+            mDbAdaper.insertBTS(mCurrentCell,mDevice.getIMEI());
         }
         else  {
             // calculate the Cell's Locationg by below algorithm
-            double maxLat = mDbHelper.maxLatOfCellArea(mCurrentCell);
-            double minLat = mDbHelper.minLatOfCellArea(mCurrentCell);
-            double maxLon = mDbHelper.maxLonOfCellArea(mCurrentCell);
-            double minLon = mDbHelper.minLonOfCellArea(mCurrentCell);
+            double maxLat = mDbAdaper.maxLatOfCellArea(mCurrentCell);
+            double minLat = mDbAdaper.minLatOfCellArea(mCurrentCell);
+            double maxLon = mDbAdaper.maxLonOfCellArea(mCurrentCell);
+            double minLon = mDbAdaper.minLonOfCellArea(mCurrentCell);
             if (maxLat>0 && maxLon>0 && minLat>0 && minLon>0 ) {
                 //LatLng newCellLL = new LatLng((maxLat+minLat)/2, (maxLon+minLon)/2);
                 mCurrentCell.setLat((maxLat+minLat)/2);
                 mCurrentCell.setLon((maxLon+minLon)/2);
-                mDbHelper.updateBTS(mCurrentCell);
+                mDbAdaper.updateBTS(mCurrentCell);
             }
         }
 
         //table DETECTEDTOWERS
-        if (!mDbHelper.cellRelatedTowerInTable(mCurrentCell)){
-            mDbHelper.insertCellRelatedTower(mCurrentCell, mDevice.getIMEI());
+        if (!mDbAdaper.cellRelatedTowerInTable(mCurrentCell)){
+            mDbAdaper.insertCellRelatedTower(mCurrentCell, mDevice.getIMEI());
         }
         else {
             // calculate the Cell's Location by below algorithm
-            double maxLat = mDbHelper.maxLatOfCellRelatedTowerArea(mCurrentCell);
-            double minLat = mDbHelper.minLatOfCellRelatedTowerArea(mCurrentCell);
-            double maxLon = mDbHelper.maxLonOfCellRelatedTowerArea(mCurrentCell);
-            double minLon = mDbHelper.minLonOfCellRelatedTowerArea(mCurrentCell);
+            double maxLat = mDbAdaper.maxLatOfCellRelatedTowerArea(mCurrentCell);
+            double minLat = mDbAdaper.minLatOfCellRelatedTowerArea(mCurrentCell);
+            double maxLon = mDbAdaper.maxLonOfCellRelatedTowerArea(mCurrentCell);
+            double minLon = mDbAdaper.minLonOfCellRelatedTowerArea(mCurrentCell);
             if (maxLat>0 && maxLon>0 && minLat>0 && minLon>0 ) {
                 mCurrentCell.setLat((maxLat+minLat)/2);
                 mCurrentCell.setLon((maxLon+minLon)/2);
-                mDbHelper.updateCellRelatedTower(mCurrentCell);
+                mDbAdaper.updateCellRelatedTower(mCurrentCell);
             }
         }
 

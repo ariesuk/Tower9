@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity
     private TowerService mTowerService;
     private boolean mBound;
     private Context mContext;
-    private DataBaseAdapter mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,10 +187,12 @@ public class MainActivity extends AppCompatActivity
             @Override
             protected Boolean doInBackground(Void... params) {
                 //# mDb.open();
-                mDb = new DataBaseAdapter(getBaseContext());
-                //mDb.createDatabase();
-                mDb.open();
-                return mDb.backupDB();
+                if(mTowerService!=null) {
+                    return  mTowerService.getSingletonDbAdapater().backupDB();
+                }
+                else {
+                    return false;
+                }
             }
 
             @Override

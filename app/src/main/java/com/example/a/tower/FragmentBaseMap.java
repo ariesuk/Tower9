@@ -85,6 +85,7 @@ public class FragmentBaseMap extends Fragment {
     private int currentCID;
     private int currentLAC;
     private  int currentDbm;
+    private TowerService mTowerService;
 
     // 初始化全局 bitmap 信息，不用时及时 recycle
 
@@ -203,6 +204,7 @@ public class FragmentBaseMap extends Fragment {
 
     @Override
     public void onDestroy() {
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mMessageReceiver);
         // 退出时销毁定位
         mLocClient.stop();
         // 关闭定位图层
@@ -211,6 +213,7 @@ public class FragmentBaseMap extends Fragment {
         mMapView = null;
         // 取消监听 SDK 广播
         getActivity().unregisterReceiver(mReceiver);
+        stationsAsyncTask.cancel(true);
         super.onDestroy();
     }
 
@@ -252,6 +255,9 @@ public class FragmentBaseMap extends Fragment {
                         location.getLongitude());
                 MapStatus.Builder builder = new MapStatus.Builder();
                 builder.target(ll).zoom(18.0f);
+                if (mTowerService == null) {
+                    mTowerService = ((MainActivity) getActivity()).getTowerService();
+                }
                 mBaiduMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 mBaiduMap.setOnMapStatusChangeListener(statusListener);
                 mBaiduMap.setOnMarkerClickListener(markerListener);
@@ -324,14 +330,15 @@ public class FragmentBaseMap extends Fragment {
     }
 
     public boolean getRegisteredBaseStations() {
-        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
-        mDbHelper.createDatabase();
-        mDbHelper.open();
+
         mAllRegisteredStation = new ArrayList<>();
         LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
         LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
         //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
-        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.registeredStationTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        if (mTowerService == null) {
+            mTowerService = ((MainActivity) getActivity()).getTowerService();
+        }
+        Cursor cursor = mTowerService.getSingletonDbAdapater().getStationsByGpsScope(TowerConstant.registeredStationTable, new LatLng(ll_West_South.latitude - BAIDU_OFFSET_LAT, ll_West_South.longitude - BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude - BAIDU_OFFSET_LAT, ll_East_North.longitude - BAIDU_OFFSET_LAT));
         int i = 0;
         if (cursor.moveToFirst()) {
             do {
@@ -362,8 +369,6 @@ public class FragmentBaseMap extends Fragment {
                 mAllRegisteredStation.add(station);
             } while (cursor.moveToNext());
         }
-        mDbHelper.close();
-
         // todo, should check if this process throw error
         return true;
     }
@@ -371,9 +376,7 @@ public class FragmentBaseMap extends Fragment {
     /*
     // get from detectedCellTable
     public boolean getDetectedStations() {
-        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
-        mDbHelper.createDatabase();
-        mDbHelper.open();
+
         mAllDetectedStation = new ArrayList<>();
         LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
         LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
@@ -394,21 +397,18 @@ public class FragmentBaseMap extends Fragment {
                 mAllDetectedStation.add(cell);
             } while (cursor.moveToNext());
         }
-        mDbHelper.close();
        // todo, should check if this process throw error
         return true;
     } */
 
     // get from detectedTowerTable
     public boolean getDetectedStations() {
-        DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
-        mDbHelper.createDatabase();
-        mDbHelper.open();
+
         mAllDetectedStation = new ArrayList<>();
         LatLng ll_West_South = mBaiduMap.getProjection().fromScreenLocation(new Point(0,mBaiduMap.getMapStatus().targetScreen.y*2));
         LatLng ll_East_North = mBaiduMap.getProjection().fromScreenLocation(new Point(mBaiduMap.getMapStatus().targetScreen.x * 2, 0));
         //Cursor cursor = mDbHelper.getStationsByGpsScope(ll_West_South, ll_East_North);
-        Cursor cursor = mDbHelper.getStationsByGpsScope(TowerConstant.detectedTowerTable,new LatLng(ll_West_South.latitude-BAIDU_OFFSET_LAT, ll_West_South.longitude-BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude-BAIDU_OFFSET_LAT,ll_East_North.longitude-BAIDU_OFFSET_LAT));
+        Cursor cursor =  mTowerService.getSingletonDbAdapater().getStationsByGpsScope(TowerConstant.detectedTowerTable, new LatLng(ll_West_South.latitude - BAIDU_OFFSET_LAT, ll_West_South.longitude - BAIDU_OFFSET_LONG), new LatLng(ll_East_North.latitude - BAIDU_OFFSET_LAT, ll_East_North.longitude - BAIDU_OFFSET_LAT));
         int i = 0;
         if (cursor.moveToFirst()) {
             do {
@@ -424,7 +424,6 @@ public class FragmentBaseMap extends Fragment {
                 mAllDetectedStation.add(tower);
             } while (cursor.moveToNext());
         }
-        mDbHelper.close();
         // todo, should check if this process throw error
         return true;
     }
@@ -566,9 +565,8 @@ public class FragmentBaseMap extends Fragment {
                 ooS = new MarkerOptions().position(llS).icon(bd_NEW_YD_LTE).zIndex(9).draggable(true);
             }
 
-            TowerService ts = ((MainActivity) getActivity()).getTowerService();
-            ts.getCellTracker().refreshDevice();
-            Cell cell1 = ts.getCell();
+            mTowerService.getCellTracker().refreshDevice();
+            Cell cell1 = mTowerService.getCell();
             currentCID = cell1.getCid();
             currentLAC = cell1.getLac();
             currentDbm = cell1.getDbm();
@@ -719,11 +717,9 @@ public class FragmentBaseMap extends Fragment {
 
         public boolean onDetectedMarkerClick(final Marker marker, int markerPos) {
             Tower tower = ((Tower) (mAllDetectedStation.get(markerPos)));
-            DataBaseAdapter mDbHelper = new DataBaseAdapter(getActivity().getBaseContext());
-            mDbHelper.createDatabase();
-            mDbHelper.open();
+
             String cids="";
-            Cursor cursor = mDbHelper.getDetectedCellsByTowerId(tower.getTid());
+            Cursor cursor =  mTowerService.getSingletonDbAdapater().getDetectedCellsByTowerId(tower.getTid());
             int i = 0;
             if (cursor.moveToFirst()) {
                 do {
