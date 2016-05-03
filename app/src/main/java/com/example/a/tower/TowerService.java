@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,6 +43,7 @@ public class TowerService extends Service  implements LocationListener{
     private Cell mCurrentCell;
     private Device mDevice;
     private DataBaseAdapter mDbAdaper;
+    public RecordAsyncTask recordAsyncTask;
 
     @Override
     public void onCreate() {
@@ -128,7 +130,10 @@ public class TowerService extends Service  implements LocationListener{
     @Override
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
-        recordNetworkCellOnLocation(location);
+        Toast toast=Toast.makeText(getApplicationContext(),String.valueOf(location.getLatitude() + "  " + String.valueOf(location.getLongitude())), Toast.LENGTH_SHORT);
+        toast.show();
+        //recordNetworkCellOnLocation(location);
+        recordDataInDB(location);
     }
 
     @Override
@@ -210,7 +215,8 @@ public class TowerService extends Service  implements LocationListener{
                         //device.cell.setCid(gsmCellLocation.getCid());     // CID
                         // if the cell is diff from mCurrentCell, record it to db
                         if (mCurrentCell.getCid() != gsmCellLocation.getCid() || mCurrentCell.getLac() != gsmCellLocation.getLac()) {
-                            recordNetworkCellOnLocation(mCurrentLocation);
+                            //recordNetworkCellOnLocation(mCurrentLocation);
+                            recordDataInDB(mCurrentLocation);
                             Toast toast=Toast.makeText(getApplicationContext(),"Found cell by onCellLocationChanged", Toast.LENGTH_SHORT);
                             toast.show();
                         }
@@ -223,7 +229,8 @@ public class TowerService extends Service  implements LocationListener{
                         //device.cell.setCid(cdmaCellLocation.getBaseStationId());  // BID
                         // if the cell is diff from mCurrentCell, record it to db
                         if (mCurrentCell.getCid() != cdmaCellLocation.getBaseStationId() || mCurrentCell.getLac() != cdmaCellLocation.getNetworkId()) {
-                            recordNetworkCellOnLocation(mCurrentLocation);
+                            //recordNetworkCellOnLocation(mCurrentLocation);
+                            recordDataInDB(mCurrentLocation);
                         }
                     }
             }
@@ -251,10 +258,8 @@ public class TowerService extends Service  implements LocationListener{
         return mDbAdaper;
     }
 
-    private void recordNetworkCellOnLocation(Location location) {
-        if(location == null) return;
-        Toast toast=Toast.makeText(getApplicationContext(),String.valueOf(location.getLatitude() + "  " + String.valueOf(location.getLongitude())), Toast.LENGTH_SHORT);
-        toast.show();
+    private int recordNetworkCellOnLocation(Location location) {
+        if(location == null) return 0;
 
         // get the device info, only for one time
         if (mDevice==null) {
@@ -314,16 +319,21 @@ public class TowerService extends Service  implements LocationListener{
             }
         }
 
+
         if(lastTowerId != mCurrentCell.getTowerId()) {
             //切换基站
-            Toast toast1=Toast.makeText(getApplicationContext(),"切换基站！", Toast.LENGTH_SHORT);
-            toast1.show();
+            //Toast toast1=Toast.makeText(getApplicationContext(),"切换基站！", Toast.LENGTH_SHORT);
+            //toast1.show();
             sendUpdateMapBroadcast();
+            return 1;
         }
         else if (lastCellId != mCurrentCell.getCid()) {
-            Toast toast2=Toast.makeText(getApplicationContext(),"切换蜂窝！", Toast.LENGTH_SHORT);
-            toast2.show();
+            //Toast toast2=Toast.makeText(getApplicationContext(),"切换蜂窝！", Toast.LENGTH_SHORT);
+            //toast2.show();
+            return  2;
         }
+
+        return 0;
     }
 
     private void sendUpdateMapBroadcast() {
@@ -331,5 +341,37 @@ public class TowerService extends Service  implements LocationListener{
         // add data
         intent.putExtra("com.example.a.tower.LocalEvent", "updateMap");
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    public void recordDataInDB(Location location) {
+        if (recordAsyncTask != null && recordAsyncTask.getStatus()!=AsyncTask.Status.FINISHED) {
+            // there is a task that not finished, so do nothing, just skip it
+            return;
+        }
+        recordAsyncTask = new RecordAsyncTask();
+        recordAsyncTask.execute(location);
+    }
+
+    private class RecordAsyncTask extends AsyncTask<Location, Void, Integer> {
+        @Override
+        protected Integer doInBackground(Location... locations) {
+            Location newLocation = locations[0];
+            return recordNetworkCellOnLocation(newLocation);
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            super.onPostExecute(result);
+            switch (result.intValue()) {
+                case 1:
+                    Toast toast1=Toast.makeText(getApplicationContext(),"切换基站！", Toast.LENGTH_SHORT);
+                    toast1.show();
+                    break;
+                case 2:
+                    Toast toast2=Toast.makeText(getApplicationContext(),"切换蜂窝！", Toast.LENGTH_SHORT);
+                    toast2.show();
+                    break;
+            }
+        }
     }
 }
